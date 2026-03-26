@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Board Game</string>
+    <string name="player_1">Player 1: 0</string>
+    <string name="player_2">Player 2: 0</string>
+    <string name="player_1_dynamic">Player 1: %1$d</string>
+    <string name="player_2_dynamic">Player 2: %1$d</string>
+    <string name="player_turn">Player Turn: Player 1</string>
+    <string name="player_turn_dynamic">Player Turn: Player %1$d</string>
+    <string name="roll_dice">Roll Dice</string>
+    <string name="reset_game">Reset Game</string>
+    <string name="dice_description">A dice image</string>
+    <string name="game_over">Game Over</string>
+</resources>

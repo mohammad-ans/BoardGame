@@ -5,6 +5,13 @@
     android:layout_height="match_parent"
     android:padding="16dp"
     android:gravity="center">
+    <GridLayout
+        android:id="@+id/grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:rowCount="5"
+        android:columnCount="5"
+        android:layout_gravity="center"/>
     <TextView
         android:id="@+id/player_turn"
         android:layout_width="wrap_content"

@@ -56,14 +56,14 @@ class MainActivity : ComponentActivity() {
         tiles = ArrayList()
 
         val padding = (8 * resources.displayMetrics.density).toInt()
-        val sizeTile = resources.displayMetrics.widthPixels / 5
+        val sizeTile = resources.displayMetrics.widthPixels / 6
         for(i in 50 downTo 1) {
             val temp = TextView(this)
             temp.text = "$i"
-            temp.textSize = 20f
+            temp.textSize = 12f
             temp.gravity = Gravity.CENTER
             val params = GridLayout.LayoutParams()
-            params.width=sizeTile
+            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
             params.height=(sizeTile * 2) / 3
             temp.setBackgroundColor(Color.LTGRAY)
             temp.layoutParams = params
@@ -95,9 +95,10 @@ class MainActivity : ComponentActivity() {
             updateDiceValue(diceVal)
         }
 
+
     }
 
-    fun updateDiceValue(diceVal : Int) {
+    suspend fun updateDiceValue(diceVal : Int) {
 
         val imgSrc = when(diceVal) {
             1 -> R.drawable.dice_one
@@ -153,6 +154,7 @@ class MainActivity : ComponentActivity() {
             player1Turn = !player1Turn
             turn.text = getString(R.string.player_turn_dynamic, 2)
         }
+        animationLaunch.join()
         rollDice.isEnabled = true
     }
 

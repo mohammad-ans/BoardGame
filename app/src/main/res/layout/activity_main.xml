@@ -4,37 +4,62 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    android:gravity="center">
-    <GridLayout
-        android:id="@+id/grid"
+    android:gravity="top"
+    android:background="@color/black">
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_columnWeight="1"
-        android:rowCount="5"
-        android:columnCount="5"
-        android:layout_gravity="center"/>
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="40dp"
+        android:paddingStart="6dp"
+        >
+        <TextView
+            android:id="@+id/player1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/player_1"
+            android:textSize="18sp"
+            android:layout_weight="0.5"
+            android:textColor="@color/white"
+            />
+        <TextView
+            android:id="@+id/player2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/player_2"
+            android:textSize="18sp"
+            android:layout_weight="0.5"
+            android:gravity="end"
+            android:textColor="@color/white"
+            />
+    </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp">
+        <GridLayout
+            android:id="@+id/grid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:rowCount="5"
+            android:columnCount="5"
+            android:layout_gravity="center"
+            android:background="@drawable/grid_border"
+            />
+    </FrameLayout>
+
     <TextView
         android:id="@+id/player_turn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/player_turn"
         android:textSize="20sp"
-        android:layout_gravity="center"/>
-<TextView
-    android:id="@+id/player1"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/player_1"
-    android:textSize="18sp"
-    android:layout_gravity="center"
-    />
-    <TextView
-        android:id="@+id/player2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/player_2"
-        android:textSize="18sp"
         android:layout_gravity="center"
+        android:textColor="@color/white"
         />
 
     <ImageView
@@ -46,6 +71,8 @@
         android:src="@drawable/dice_one"
         android:contentDescription="@string/dice_description"
         android:layout_gravity="center"
+        android:clickable="true"
+        android:focusable="true"
         />
 
     <LinearLayout
@@ -54,11 +81,6 @@
         android:orientation="horizontal"
         android:layout_gravity="center"
         >
-        <Button
-            android:id="@+id/roll_dice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/roll_dice"/>
         <Button
             android:id="@+id/reset_game"
             android:layout_width="wrap_content"

@@ -19,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import android.graphics.Color
 import android.view.Gravity
+import androidx.compose.ui.text.font.FontWeight
+import android.graphics.Typeface
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import com.example.boardgame.ui.theme.BoardGameTheme
@@ -28,7 +30,6 @@ import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
-    lateinit var rollDice : Button
     lateinit var resetBtn : Button
     lateinit var diceImg : ImageView
     lateinit var player1 : TextView
@@ -45,7 +46,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        rollDice  = findViewById<Button>(R.id.roll_dice)
         resetBtn = findViewById<Button>(R.id.reset_game)
         diceImg = findViewById<ImageView>(R.id.dice_image)
         player1 = findViewById<TextView>(R.id.player1)
@@ -57,22 +57,45 @@ class MainActivity : ComponentActivity() {
 
         val padding = (8 * resources.displayMetrics.density).toInt()
         val sizeTile = resources.displayMetrics.widthPixels / 6
-        for(i in 50 downTo 1) {
-            val temp = TextView(this)
-            temp.text = "$i"
-            temp.textSize = 12f
-            temp.gravity = Gravity.CENTER
-            val params = GridLayout.LayoutParams()
-            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-            params.height=(sizeTile * 2) / 3
-            temp.setBackgroundColor(Color.LTGRAY)
-            temp.layoutParams = params
-            grid.addView(temp)
-            tiles.add(0, temp)
 
+        var i = 50
+        var j = i
+        while(i > 0) {
+            j = i - 5
+            while(i > j) {
+                addTile(i, sizeTile)
+                i--
+            }
+            i -= 4
+            while(i <= j) {
+                addTile(i, sizeTile)
+                i++
+            }
+            i -= 6
         }
         resetBtn.setOnClickListener(::resetGame)
-        rollDice.setOnClickListener(::diceHandler)
+        diceImg.setOnClickListener(::diceHandler)
+    }
+    fun addTile(i : Int, sizeTile : Int) {
+        val temp = TextView(this)
+        temp.text = "$i"
+
+        val params = GridLayout.LayoutParams()
+        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+        params.height=(sizeTile * 3) / 4
+
+        temp.gravity = Gravity.CENTER
+        temp.textSize = 14f
+        temp.setTypeface(temp.typeface, Typeface.BOLD)
+        temp.setBackgroundResource(R.drawable.border)
+        temp.layoutParams = params
+
+        grid.addView(temp)
+        val tempVar = i % 10
+        if(tempVar in 6..9 || tempVar == 0)
+            tiles.add(0, temp)
+        else
+            tiles.add(tempVar - 1, temp)
     }
     fun diceRoll() : Int{
         return (1..6).random()
@@ -80,12 +103,12 @@ class MainActivity : ComponentActivity() {
 
     fun winner(message : String){
         turn.text = getString(R.string.game_over)
-        rollDice.isEnabled = false
+        diceImg.isEnabled = false
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     fun diceHandler(view : View) {
-        rollDice.isEnabled = false
+        diceImg.isEnabled = false
         val diceVal = diceRoll()
 
         diceImg.animate().rotationBy(360f).duration = 300
@@ -116,7 +139,7 @@ class MainActivity : ComponentActivity() {
             mainAnimation(start, if (player1Pos <= 50) player1Pos else 49) {
                 tiles[if ((player1Pos - 1) < 50) player1Pos - 1 else 49].setBackgroundColor(Color.BLUE)
                 if(player1Pos > 1){
-                    tiles[if ((player1Pos - 2) < 49) player1Pos - 2 else 48].setBackgroundColor(Color.LTGRAY)
+                    tiles[if ((player1Pos - 2) < 49) player1Pos - 2 else 48].setBackgroundResource(R.drawable.border)
                 }
             }
 
@@ -139,7 +162,7 @@ class MainActivity : ComponentActivity() {
             mainAnimation(start, if (player2Pos <= 50) player2Pos else 49) {
                 tiles[if ((player2Pos - 1) < 50) (player2Pos - 1) else 49].setBackgroundColor(Color.RED)
                 if(player2Pos > 1){
-                    tiles[if ((player2Pos - 2) < 49) (player2Pos - 2) else 48].setBackgroundColor(Color.LTGRAY)
+                    tiles[if ((player2Pos - 2) < 49) (player2Pos - 2) else 48].setBackgroundResource(R.drawable.border)
                 }
             }
 
@@ -155,7 +178,7 @@ class MainActivity : ComponentActivity() {
             turn.text = getString(R.string.player_turn_dynamic, 2)
         }
         animationLaunch.join()
-        rollDice.isEnabled = true
+        diceImg.isEnabled = true
     }
 
     fun resetGame(view : View) {
@@ -169,7 +192,7 @@ class MainActivity : ComponentActivity() {
         diceImg.setImageResource(R.drawable.dice_one)
 
         resetTiles()
-        rollDice.isEnabled = true
+        diceImg.isEnabled = true
     }
     fun animation1(pos : Int) {
         resetTiles()
@@ -189,7 +212,7 @@ class MainActivity : ComponentActivity() {
     }
     fun resetTiles() {
         for (tile in tiles) {
-            tile.setBackgroundColor(Color.LTGRAY)
+            tile.setBackgroundResource(R.drawable.border)
         }
     }
 }

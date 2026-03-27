@@ -38,9 +38,20 @@ class MainActivity : ComponentActivity() {
     lateinit var tiles : ArrayList<TextView>
     lateinit var grid : GridLayout
     lateinit var animationLaunch : Job
+    lateinit var reverseAnimationLaunch : Job
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
+    val snakes = mapOf<Int, Int>(
+        49 to 38,
+        47 to 36,
+        42 to 33,
+        44 to 33,
+        40 to 29,
+        35 to 24,
+        30 to 19,
+        23 to 12,
+        15 to 4)
     var player1Turn = true;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -150,6 +161,14 @@ class MainActivity : ComponentActivity() {
                 animationLaunch.cancel()
                 return
             }
+            if(snakes.containsKey(player1Pos)) {
+                val temp = player1Pos - 2
+                player1Pos = snakes.getValue(player1Pos)
+                reverseAnimation(temp, player1Pos - 1) {
+                    tiles[player1Pos - 1].setBackgroundResource(R.drawable.border)
+                }
+
+            }
             player1Turn = !player1Turn
             turn.text = getString(R.string.player_turn_dynamic, 1)
         }
@@ -174,6 +193,14 @@ class MainActivity : ComponentActivity() {
                 return
             }
 
+            if(snakes.containsKey(player2Pos)) {
+                val temp = player2Pos - 2
+                player2Pos = snakes.getValue(player2Pos)
+                reverseAnimation(temp, player2Pos - 1) {
+                    tiles[player2Pos - 1].setBackgroundResource(R.drawable.border)
+                }
+
+            }
             player1Turn = !player1Turn
             turn.text = getString(R.string.player_turn_dynamic, 2)
         }
@@ -205,7 +232,19 @@ class MainActivity : ComponentActivity() {
         animationLaunch = lifecycleScope.launch {
             for(pos in start..(end - 1)) {
                 animation1(pos)
-                delay(150)
+                delay(100)
+            }
+            func()
+        }
+    }
+
+
+    fun reverseAnimation(start : Int, end : Int, func : () -> Unit){
+        lifecycleScope.launch {
+            for(pos in start downTo end) {
+                resetTiles()
+                tiles[pos].setBackgroundColor(Color.YELLOW)
+                delay(100)
             }
             func()
         }

@@ -15,7 +15,7 @@
         android:orientation="horizontal"
         android:weightSum="1"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="5dp"
         android:paddingStart="6dp"
         >
         <TextView
@@ -41,7 +41,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp">
+        android:layout_marginBottom="30dp">
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake1X"
@@ -226,6 +226,26 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="0.42"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/player1X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.0"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/player2X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.1"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/playerY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.99"/>
         <GridLayout
             android:id="@+id/grid"
             android:layout_width="match_parent"
@@ -362,7 +382,7 @@
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:rotation="42"
+            android:rotation="44"
             android:src="@drawable/stair"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintHeight_percent="0.26"
@@ -377,30 +397,60 @@
             app:layout_constraintHeight_percent="0.26"
             app:layout_constraintStart_toStartOf="@id/stair5X"
             app:layout_constraintTop_toTopOf="@id/stair5Y" />
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:id="@+id/player2icon"
+            android:src="@drawable/player2"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.08"
+            app:layout_constraintStart_toStartOf="@id/player2X"
+            app:layout_constraintBottom_toBottomOf="@id/playerY"
+            />
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:id="@+id/player1icon"
+            android:src="@drawable/player1"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.08"
+            app:layout_constraintStart_toStartOf="@id/player1X"
+            app:layout_constraintBottom_toBottomOf="@id/playerY"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-    <TextView
-        android:id="@+id/player_turn"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/player_turn"
-        android:textSize="20sp"
-        android:layout_gravity="center"
-        android:textColor="@color/white"
-        />
-
-    <ImageView
-        android:id="@+id/dice_image"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:clickable="true"
-        android:contentDescription="@string/dice_description"
-        android:focusable="true"
-        android:src="@drawable/dice_one" />
+        android:layout_marginBottom="40dp"
+        android:paddingLeft="4dp">
+        <TextView
+            android:id="@+id/player_turn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/player_turn"
+            android:textSize="20sp"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+
+        <ImageView
+            android:id="@+id/dice_image"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:clickable="true"
+            android:contentDescription="@string/dice_description"
+            android:focusable="true"
+            android:src="@drawable/dice_one"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"

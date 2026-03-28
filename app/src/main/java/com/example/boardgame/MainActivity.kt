@@ -4,40 +4,39 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.GridLayout
-import android.widget.GridView
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import android.graphics.Color
 import android.view.Gravity
-import androidx.compose.ui.text.font.FontWeight
 import android.graphics.Typeface
-import androidx.compose.ui.tooling.preview.Preview
+import android.view.ViewGroup
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.toColorInt
+import androidx.core.view.marginBottom
 import androidx.lifecycle.lifecycleScope
 import com.example.boardgame.ui.theme.BoardGameTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 
 class MainActivity : ComponentActivity() {
     lateinit var resetBtn : Button
     lateinit var diceImg : ImageView
     lateinit var player1 : TextView
+    lateinit var player1Icon : ImageView
     lateinit var player2 : TextView
+    lateinit var player2Icon : ImageView
     lateinit var turn : TextView
     lateinit var tiles : ArrayList<TextView>
     lateinit var grid : GridLayout
+    var sizeTile : Int = 0
+    var heightTile : Int = 0
+
     lateinit var animationLaunch : Job
     lateinit var reverseAnimationLaunch : Job
     var player1Pos = 0
@@ -60,7 +59,7 @@ class MainActivity : ComponentActivity() {
         3 to 14,
         16 to 27
     )
-    var player1Turn = true;
+    var player1Turn = 1;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -70,24 +69,25 @@ class MainActivity : ComponentActivity() {
         player1 = findViewById<TextView>(R.id.player1)
         player2 = findViewById<TextView>(R.id.player2)
         turn = findViewById<TextView>(R.id.player_turn)
+        player1Icon = findViewById<ImageView>(R.id.player1icon)
+        player2Icon = findViewById<ImageView>(R.id.player2icon)
         grid = findViewById<GridLayout>(R.id.grid)
-//        grid.layoutParams.height = resources.displayMetrics.heightPixels / 2
         tiles = ArrayList()
-
+        sizeTile = resources.displayMetrics.widthPixels / 6
+        heightTile = (sizeTile * 3) / 4
         val padding = (8 * resources.displayMetrics.density).toInt()
-        val sizeTile = resources.displayMetrics.widthPixels / 6
 
         var i = 50
         var j = i
         while(i > 0) {
             j = i - 5
             while(i > j) {
-                addTile(i, sizeTile)
+                addTile(i)
                 i--
             }
             i -= 4
             while(i <= j) {
-                addTile(i, sizeTile)
+                addTile(i)
                 i++
             }
             i -= 6
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
         resetBtn.setOnClickListener(::resetGame)
         diceImg.setOnClickListener(::diceHandler)
     }
-    fun addTile(i : Int, sizeTile : Int) {
+    fun addTile(i : Int) {
         val temp = TextView(this)
         temp.text = "$i"
 
@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
         temp.textSize = 14f
         temp.setTypeface(temp.typeface, Typeface.BOLD)
 
-        if((i % 2) == 0)
+        if(((i-1) % 2) == 0)
             temp.setBackgroundColor("#dbffcd".toColorInt())
         else
             temp.setBackgroundColor("#669ca4".toColorInt())
@@ -121,6 +121,7 @@ class MainActivity : ComponentActivity() {
             tiles.add(tempVar - 1, temp)
     }
     fun diceRoll() : Int{
+        return 3
         return (1..6).random()
     }
 
@@ -155,7 +156,7 @@ class MainActivity : ComponentActivity() {
             else -> R.drawable.dice_six
         }
         diceImg.setImageResource(imgSrc)
-        if(player1Turn) {
+        if(player1Turn == 1) {
             val start = player1Pos - 1
             player1Pos += diceVal
             player1.text = getString(R.string.player_1_dynamic, player1Pos)
@@ -192,8 +193,9 @@ class MainActivity : ComponentActivity() {
                 }
 
             }
-            player1Turn = !player1Turn
-            turn.text = getString(R.string.player_turn_dynamic, 1)
+            animationLaunch.join()
+            changePosition(player1Icon, start, player1Pos - 1)
+            player1Turn = 2
         }
         else{
             val start = player2Pos
@@ -236,17 +238,18 @@ class MainActivity : ComponentActivity() {
                 }
 
             }
-            player1Turn = !player1Turn
-            turn.text = getString(R.string.player_turn_dynamic, 2)
+            animationLaunch.join()
+            changePosition(player2Icon, start, player2Pos - 1)
+            player1Turn = 1
         }
-        animationLaunch.join()
+        turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         diceImg.isEnabled = true
     }
 
     fun resetGame(view : View) {
         player1Pos = 0
         player2Pos = 0
-        player1Turn = true
+        player1Turn = 1
 
         player1.text = getString(R.string.player_1)
         player2.text = getString(R.string.player_2)
@@ -296,4 +299,19 @@ class MainActivity : ComponentActivity() {
             setColor(index)
         }
     }
+    fun changePosition(player : ImageView, start : Int, end : Int) {
+        val rowCheck = end / 5
+        val p = player.layoutParams as ConstraintLayout.LayoutParams
+        val bottom = heightTile * rowCheck
+        var left = 0
+        if((rowCheck % 2) == 0) {
+            left = (end % 5) * tiles[0].width
+        }
+        else{
+            left = abs((end % 5) - 4) * tiles[0].width
+        }
+        p.setMargins(left, p.topMargin, p.rightMargin, bottom)
+        player.layoutParams = p
+    }
+
 }

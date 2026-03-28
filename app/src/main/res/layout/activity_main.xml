@@ -161,6 +161,71 @@
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="0.75"
             />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair1X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.57"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair1Y"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.045"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair2X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.02"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair2Y"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.4"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair3X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.05"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair3Y"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.11"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair4X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.45"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair4Y"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.74"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair5X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.65"
+            />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stair5Y"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.42"/>
         <GridLayout
             android:id="@+id/grid"
             android:layout_width="match_parent"
@@ -264,6 +329,54 @@
             app:layout_constraintStart_toStartOf="@id/snake9X"
             app:layout_constraintTop_toTopOf="@id/snake9Y"
             />
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:src="@drawable/stair"
+            android:rotation="40"
+            app:layout_constraintHeight_percent="0.35"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toStartOf="@id/stair1X"
+            app:layout_constraintTop_toTopOf="@id/stair1Y"
+            />
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:rotation="52"
+            android:src="@drawable/stair"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintStart_toStartOf="@id/stair2X"
+            app:layout_constraintTop_toTopOf="@id/stair2Y" />
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:rotation="335"
+            android:src="@drawable/stair"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintStart_toStartOf="@id/stair3X"
+            app:layout_constraintTop_toTopOf="@id/stair3Y" />
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:rotation="42"
+            android:src="@drawable/stair"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintStart_toStartOf="@id/stair4X"
+            app:layout_constraintTop_toTopOf="@id/stair4Y" />
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:rotation="335"
+            android:src="@drawable/stair"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintStart_toStartOf="@id/stair5X"
+            app:layout_constraintTop_toTopOf="@id/stair5Y" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 

@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Left rounded rail -->
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M6,1
+                          Q5,1 5,2
+                          L5,22
+                          Q5,23 6,23
+                          L7,23
+                          Q8,23 8,22
+                          L8,2
+                          Q8,1 7,1 Z"/>
+
+    <!-- Right rounded rail -->
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M17,1
+                          Q16,1 16,2
+                          L16,22
+                          Q16,23 17,23
+                          L18,23
+                          Q19,23 19,22
+                          L19,2
+                          Q19,1 18,1 Z"/>
+
+    <!-- Rounded thin steps -->
+    <path
+        android:fillColor="#BCAAA4"
+        android:pathData="
+            M8,5 Q8,4.5 8.5,4.5 L15.5,4.5 Q16,4.5 16,5 Q16,5.5 15.5,5.5 L8.5,5.5 Q8,5.5 8,5 Z
+            M8,9 Q8,8.5 8.5,8.5 L15.5,8.5 Q16,8.5 16,9 Q16,9.5 15.5,9.5 L8.5,9.5 Q8,9.5 8,9 Z
+            M8,13 Q8,12.5 8.5,12.5 L15.5,12.5 Q16,12.5 16,13 Q16,13.5 15.5,13.5 L8.5,13.5 Q8,13.5 8,13 Z
+            M8,17 Q8,16.5 8.5,16.5 L15.5,16.5 Q16,16.5 16,17 Q16,17.5 15.5,17.5 L8.5,17.5 Q8,17.5 8,17 Z
+        "/>
+
+</vector>

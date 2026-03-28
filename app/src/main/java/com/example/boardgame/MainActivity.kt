@@ -22,6 +22,7 @@ import android.view.Gravity
 import androidx.compose.ui.text.font.FontWeight
 import android.graphics.Typeface
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import com.example.boardgame.ui.theme.BoardGameTheme
 import kotlinx.coroutines.Job
@@ -52,6 +53,13 @@ class MainActivity : ComponentActivity() {
         30 to 19,
         23 to 12,
         15 to 4)
+    val ladders = mapOf<Int, Int>(
+        32 to 41,
+        34 to 46,
+        11 to 28,
+        3 to 14,
+        16 to 27
+    )
     var player1Turn = true;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +106,11 @@ class MainActivity : ComponentActivity() {
         temp.gravity = Gravity.CENTER
         temp.textSize = 14f
         temp.setTypeface(temp.typeface, Typeface.BOLD)
-        temp.setBackgroundResource(R.drawable.border)
+
+        if((i % 2) == 0)
+            temp.setBackgroundColor("#dbffcd".toColorInt())
+        else
+            temp.setBackgroundColor("#669ca4".toColorInt())
         temp.layoutParams = params
 
         grid.addView(temp)
@@ -150,7 +162,7 @@ class MainActivity : ComponentActivity() {
             mainAnimation(start, if (player1Pos <= 50) player1Pos else 49) {
                 tiles[if ((player1Pos - 1) < 50) player1Pos - 1 else 49].setBackgroundColor(Color.BLUE)
                 if(player1Pos > 1){
-                    tiles[if ((player1Pos - 2) < 49) player1Pos - 2 else 48].setBackgroundResource(R.drawable.border)
+                    setColor(if ((player1Pos - 2) < 49) player1Pos - 2 else 48)
                 }
             }
 
@@ -162,10 +174,21 @@ class MainActivity : ComponentActivity() {
                 return
             }
             if(snakes.containsKey(player1Pos)) {
+                animationLaunch.join()
                 val temp = player1Pos - 2
                 player1Pos = snakes.getValue(player1Pos)
-                reverseAnimation(temp, player1Pos - 1) {
-                    tiles[player1Pos - 1].setBackgroundResource(R.drawable.border)
+                animationLaunch = reverseAnimation(temp, player1Pos - 1) {
+                    setColor(player1Pos - 1)
+                    player1.text = getString(R.string.player_1_dynamic, player1Pos)
+                }
+            }
+            if(ladders.containsKey(player1Pos)){
+                animationLaunch.join()
+                val temp = player1Pos
+                player1Pos = ladders.getValue(player1Pos)
+                mainAnimation(temp, player1Pos){
+                    setColor(player1Pos - 2)
+                    player1.text = getString(R.string.player_1_dynamic, player1Pos)
                 }
 
             }
@@ -181,7 +204,7 @@ class MainActivity : ComponentActivity() {
             mainAnimation(start, if (player2Pos <= 50) player2Pos else 49) {
                 tiles[if ((player2Pos - 1) < 50) (player2Pos - 1) else 49].setBackgroundColor(Color.RED)
                 if(player2Pos > 1){
-                    tiles[if ((player2Pos - 2) < 49) (player2Pos - 2) else 48].setBackgroundResource(R.drawable.border)
+                    setColor(if ((player2Pos - 2) < 49) (player2Pos - 2) else 48)
                 }
             }
 
@@ -194,10 +217,22 @@ class MainActivity : ComponentActivity() {
             }
 
             if(snakes.containsKey(player2Pos)) {
+                animationLaunch.join()
                 val temp = player2Pos - 2
                 player2Pos = snakes.getValue(player2Pos)
-                reverseAnimation(temp, player2Pos - 1) {
-                    tiles[player2Pos - 1].setBackgroundResource(R.drawable.border)
+                animationLaunch = reverseAnimation(temp, player2Pos - 1) {
+                    setColor(player2Pos - 1)
+                    player2.text = getString(R.string.player_2_dynamic, player2Pos)
+                }
+
+            }
+            if(ladders.containsKey(player2Pos)){
+                animationLaunch.join()
+                val temp = player2Pos
+                player2Pos = ladders.getValue(player2Pos)
+                mainAnimation(temp, player1Pos){
+                    setColor(player2Pos - 2)
+                    player2.text = getString(R.string.player_2_dynamic, player2Pos)
                 }
 
             }
@@ -239,8 +274,8 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    fun reverseAnimation(start : Int, end : Int, func : () -> Unit){
-        lifecycleScope.launch {
+    fun reverseAnimation(start : Int, end : Int, func : () -> Unit) : Job{
+        return lifecycleScope.launch {
             for(pos in start downTo end) {
                 resetTiles()
                 tiles[pos].setBackgroundColor(Color.YELLOW)
@@ -249,9 +284,16 @@ class MainActivity : ComponentActivity() {
             func()
         }
     }
+    fun setColor(i : Int) {
+        if((i % 2) == 0)
+            tiles[i].setBackgroundColor("#dbffcd".toColorInt())
+        else
+            tiles[i].setBackgroundColor("#669ca4".toColorInt())
+    }
+
     fun resetTiles() {
-        for (tile in tiles) {
-            tile.setBackgroundResource(R.drawable.border)
+        for ((index, tile) in tiles.withIndex()) {
+            setColor(index)
         }
     }
 }

@@ -13,6 +13,8 @@ import android.graphics.Color
 import android.view.Gravity
 import android.graphics.Typeface
 import android.view.ViewGroup
+import android.app.AlertDialog
+import android.content.res.Configuration
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.toColorInt
 import androidx.core.view.marginBottom
@@ -64,6 +66,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            sizeTile = (resources.displayMetrics.heightPixels) / 9
+            heightTile = (sizeTile * 3) / 4
+
+        }
+        else{
+            sizeTile = resources.displayMetrics.widthPixels / 6
+            heightTile = (sizeTile * 3) / 4
+        }
         resetBtn = findViewById<Button>(R.id.reset_game)
         diceImg = findViewById<ImageView>(R.id.dice_image)
         player1 = findViewById<TextView>(R.id.player1)
@@ -73,8 +84,6 @@ class MainActivity : ComponentActivity() {
         player2Icon = findViewById<ImageView>(R.id.player2icon)
         grid = findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
-        sizeTile = resources.displayMetrics.widthPixels / 6
-        heightTile = (sizeTile * 3) / 4
         val padding = (8 * resources.displayMetrics.density).toInt()
 
         var i = 50
@@ -92,7 +101,7 @@ class MainActivity : ComponentActivity() {
             }
             i -= 6
         }
-        resetBtn.setOnClickListener(::resetGame)
+        resetBtn.setOnClickListener(::resetGameCheck)
         diceImg.setOnClickListener(::diceHandler)
     }
     fun addTile(i : Int) {
@@ -121,7 +130,6 @@ class MainActivity : ComponentActivity() {
             tiles.add(tempVar - 1, temp)
     }
     fun diceRoll() : Int{
-        return 3
         return (1..6).random()
     }
 
@@ -159,59 +167,52 @@ class MainActivity : ComponentActivity() {
         if(player1Turn == 1) {
             val start = player1Pos - 1
             player1Pos += diceVal
-            player1.text = getString(R.string.player_1_dynamic, player1Pos)
-            mainAnimation(start, if (player1Pos <= 50) player1Pos else 49) {
-                tiles[if ((player1Pos - 1) < 50) player1Pos - 1 else 49].setBackgroundColor(Color.BLUE)
-                if(player1Pos > 1){
-                    setColor(if ((player1Pos - 2) < 49) player1Pos - 2 else 48)
-                }
+            mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
+                setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
             }
 
             if(player1Pos >= winningPoints) {
+                animationLaunch.join()
+                changePosition(player1Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.BLUE)
                 winner("Player 1 wins")
-                animationLaunch.cancel()
                 return
             }
             if(snakes.containsKey(player1Pos)) {
                 animationLaunch.join()
-                val temp = player1Pos - 2
+                val temp = player1Pos - 1
                 player1Pos = snakes.getValue(player1Pos)
                 animationLaunch = reverseAnimation(temp, player1Pos - 1) {
                     setColor(player1Pos - 1)
-                    player1.text = getString(R.string.player_1_dynamic, player1Pos)
                 }
             }
             if(ladders.containsKey(player1Pos)){
                 animationLaunch.join()
-                val temp = player1Pos
+                val temp = player1Pos - 1
                 player1Pos = ladders.getValue(player1Pos)
-                mainAnimation(temp, player1Pos){
-                    setColor(player1Pos - 2)
-                    player1.text = getString(R.string.player_1_dynamic, player1Pos)
+                mainAnimation(temp, player1Pos - 1){
+                    setColor(player1Pos - 1)
                 }
 
             }
             animationLaunch.join()
+            player1.text = getString(R.string.player_1_dynamic, player1Pos)
             changePosition(player1Icon, start, player1Pos - 1)
+
             player1Turn = 2
         }
         else{
-            val start = player2Pos
+            val start = player2Pos - 1
             player2Pos += diceVal
-            player2.text = getString(R.string.player_2_dynamic, player2Pos)
 
-
-            mainAnimation(start, if (player2Pos <= 50) player2Pos else 49) {
-                tiles[if ((player2Pos - 1) < 50) (player2Pos - 1) else 49].setBackgroundColor(Color.RED)
-                if(player2Pos > 1){
-                    setColor(if ((player2Pos - 2) < 49) (player2Pos - 2) else 48)
-                }
+            mainAnimation(start, if (player2Pos <= 50) player2Pos - 1 else 49) {
+                    setColor(if (player2Pos <= 50) (player2Pos - 1) else 49)
             }
 
             if(player2Pos >= winningPoints) {
-                animationLaunch.cancel()
+                animationLaunch.join()
+                changePosition(player2Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.RED)
                 winner("Player 2 wins")
@@ -220,25 +221,24 @@ class MainActivity : ComponentActivity() {
 
             if(snakes.containsKey(player2Pos)) {
                 animationLaunch.join()
-                val temp = player2Pos - 2
+                val temp = player2Pos - 1
                 player2Pos = snakes.getValue(player2Pos)
                 animationLaunch = reverseAnimation(temp, player2Pos - 1) {
                     setColor(player2Pos - 1)
-                    player2.text = getString(R.string.player_2_dynamic, player2Pos)
                 }
 
             }
             if(ladders.containsKey(player2Pos)){
                 animationLaunch.join()
-                val temp = player2Pos
+                val temp = player2Pos - 1
                 player2Pos = ladders.getValue(player2Pos)
-                mainAnimation(temp, player1Pos){
-                    setColor(player2Pos - 2)
-                    player2.text = getString(R.string.player_2_dynamic, player2Pos)
+                mainAnimation(temp, player2Pos - 1){
+                    setColor(player2Pos - 1)
                 }
 
             }
             animationLaunch.join()
+            player2.text = getString(R.string.player_2_dynamic, player2Pos)
             changePosition(player2Icon, start, player2Pos - 1)
             player1Turn = 1
         }
@@ -247,36 +247,61 @@ class MainActivity : ComponentActivity() {
     }
 
     fun resetGame(view : View) {
-        player1Pos = 0
-        player2Pos = 0
-        player1Turn = 1
+            player1Pos = 0
+            player2Pos = 0
+            player1Turn = 1
 
-        player1.text = getString(R.string.player_1)
-        player2.text = getString(R.string.player_2)
-        turn.text = getString(R.string.player_turn)
-        diceImg.setImageResource(R.drawable.dice_one)
-
-        resetTiles()
-        diceImg.isEnabled = true
+            player1.text = getString(R.string.player_1)
+            player2.text = getString(R.string.player_2)
+            turn.text = getString(R.string.player_turn)
+            diceImg.setImageResource(R.drawable.dice_one)
+            changePosition(player2Icon, player2Pos - 1, 0)
+            changePosition(player1Icon, player1Pos - 1, 0)
+            resetTiles()
+            diceImg.isEnabled = true
     }
+    fun resetGameCheck(view : View) {
+        if(gameEnd()) {
+            resetGame(view);
+        }
+        else if(player1Pos == 0 && player2Pos == 0){
+            Toast.makeText(this, "Game is already at starting point.", Toast.LENGTH_LONG ).show()
+        }
+        else{
+            showResetConfirmation(view)
+        }
+    }
+
+    fun showResetConfirmation(view : View) {
+        AlertDialog.Builder(this)
+            .setTitle("Reset Game?")
+            .setMessage("Current game in progress. Are you sure you want to reset?")
+            .setPositiveButton("Reset", {_, _ -> resetGame(view)})
+            .setNegativeButton("Nope", null)
+            .setCancelable(true)
+            .show()
+    }
+
     fun animation1(pos : Int) {
         resetTiles()
-        if(pos > 0) {
-            tiles[pos - 1].setBackgroundColor(Color.YELLOW)
-        }
+        if(pos > -1)
+            tiles[pos].setBackgroundColor(Color.YELLOW)
     }
     fun mainAnimation(start : Int, end : Int, func : () -> Unit) {
 
         animationLaunch = lifecycleScope.launch {
-            for(pos in start..(end - 1)) {
+            for(pos in start..end) {
                 animation1(pos)
                 delay(100)
             }
+            delay(150)
             func()
         }
     }
 
-
+    fun gameEnd() : Boolean {
+        return (player1Pos >= 50 || player2Pos >= 50)
+    }
     fun reverseAnimation(start : Int, end : Int, func : () -> Unit) : Job{
         return lifecycleScope.launch {
             for(pos in start downTo end) {
@@ -284,6 +309,7 @@ class MainActivity : ComponentActivity() {
                 tiles[pos].setBackgroundColor(Color.YELLOW)
                 delay(100)
             }
+            delay(150)
             func()
         }
     }
@@ -310,6 +336,8 @@ class MainActivity : ComponentActivity() {
         else{
             left = abs((end % 5) - 4) * tiles[0].width
         }
+        Toast.makeText(this, "$left and $bottom", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "$sizeTile and $heightTile", Toast.LENGTH_LONG).show()
         p.setMargins(left, p.topMargin, p.rightMargin, bottom)
         player.layoutParams = p
     }

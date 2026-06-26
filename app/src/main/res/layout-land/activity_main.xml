@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
+    android:paddingHorizontal="16dp"
     android:gravity="top"
     android:background="@color/black">
 
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="1"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_marginBottom="5dp"
         android:paddingStart="6dp"
         >
@@ -38,17 +38,26 @@
             android:textColor="@color/white"
             />
     </LinearLayout>
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp">
+        android:orientation="horizontal"
+        android:layout_weight="1"
+        android:weightSum="10">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:layout_weight="8">
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake1X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.25"/>
+            app:layout_constraintGuide_percent="0.28"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake1Y"
             android:layout_width="wrap_content"
@@ -57,17 +66,17 @@
             app:layout_constraintGuide_percent="0.0375"
             />
         <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/snake2X"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.6"/>
+            android:id="@+id/snake2X"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.68"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake2Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.03"
+            app:layout_constraintGuide_percent="0.029"
             />
 
         <androidx.constraintlayout.widget.Guideline
@@ -75,26 +84,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.44"/>
+            app:layout_constraintGuide_percent="0.5"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake3Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.15"
+            app:layout_constraintGuide_percent="0.2"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake4X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.25"/>
+            app:layout_constraintGuide_percent="0.27"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake4Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.11"
+            app:layout_constraintGuide_percent="0.15"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake5X"
@@ -419,27 +428,23 @@
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-<View
-    android:layout_height="0dp"
-    android:layout_width="0dp"
-    android:layout_weight="1"
-    />
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:paddingLeft="4dp">
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:paddingLeft="15dp"
+        android:layout_weight="2"
+        >
+
         <TextView
             android:id="@+id/player_turn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="@string/player_turn"
             android:textSize="20sp"
             android:textColor="@color/white"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/dice_image"
+            app:layout_constraintEnd_toEndOf="parent"
             />
 
         <ImageView
@@ -450,24 +455,29 @@
             android:contentDescription="@string/dice_description"
             android:focusable="true"
             android:src="@drawable/dice_one"
+            android:layout_marginTop="10dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             />
 
+        <Button
+            android:id="@+id/reset_game"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/grid_border"
+            android:padding="12dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/reset_game"
+            android:textColor="@color/white"
+            android:layout_marginTop="20dp"
+            app:layout_constraintTop_toBottomOf="@id/dice_image"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <Button
-        android:id="@+id/reset_game"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
 
-        android:background="@drawable/grid_border"
-        android:padding="12dp"
-        android:layout_marginBottom="10dp"
-        android:text="@string/reset_game"
-        android:textColor="@color/white" />
-
-
+</LinearLayout>
 </LinearLayout>

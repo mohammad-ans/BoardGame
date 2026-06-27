@@ -15,6 +15,7 @@ import android.graphics.Typeface
 import android.view.ViewGroup
 import android.app.AlertDialog
 import android.content.res.Configuration
+import android.os.PersistableBundle
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.toColorInt
 import androidx.core.view.marginBottom
@@ -55,16 +56,25 @@ class MainActivity : ComponentActivity() {
         23 to 12,
         15 to 4)
     val ladders = mapOf<Int, Int>(
-        32 to 41,
+
         34 to 46,
+        32 to 41,
+        16 to 27,
         11 to 28,
-        3 to 14,
-        16 to 27
+        3 to 14
     )
     var player1Turn = 1;
+    override fun onSaveInstanceState(outState : Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt("player1Pos", player1Pos)
+        outState.putInt("player2Pos", player2Pos)
+        outState.putInt("DiceVAL", 1)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
+        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
 
         if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             sizeTile = (resources.displayMetrics.heightPixels) / 9
@@ -75,13 +85,22 @@ class MainActivity : ComponentActivity() {
             sizeTile = resources.displayMetrics.widthPixels / 6
             heightTile = (sizeTile * 3) / 4
         }
-        resetBtn = findViewById<Button>(R.id.reset_game)
-        diceImg = findViewById<ImageView>(R.id.dice_image)
         player1 = findViewById<TextView>(R.id.player1)
         player2 = findViewById<TextView>(R.id.player2)
         turn = findViewById<TextView>(R.id.player_turn)
         player1Icon = findViewById<ImageView>(R.id.player1icon)
         player2Icon = findViewById<ImageView>(R.id.player2icon)
+        if(player1Pos != 0) {
+            changePosition(player1Icon, 0, player1Pos - 1)
+            player1.text = getString(R.string.player_1_dynamic, player1Pos)
+
+        }
+        if(player2Pos != 0) {
+            changePosition(player2Icon, 0, player2Pos - 1)
+            player2.text = getString(R.string.player_2_dynamic, player2Pos)
+        }
+        resetBtn = findViewById<Button>(R.id.reset_game)
+        diceImg = findViewById<ImageView>(R.id.dice_image)
         grid = findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
         val padding = (8 * resources.displayMetrics.density).toInt()
@@ -336,8 +355,6 @@ class MainActivity : ComponentActivity() {
         else{
             left = abs((end % 5) - 4) * tiles[0].width
         }
-        Toast.makeText(this, "$left and $bottom", Toast.LENGTH_LONG).show()
-        Toast.makeText(this, "$sizeTile and $heightTile", Toast.LENGTH_LONG).show()
         p.setMargins(left, p.topMargin, p.rightMargin, bottom)
         player.layoutParams = p
     }

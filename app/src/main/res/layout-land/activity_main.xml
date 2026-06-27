@@ -57,26 +57,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.28"/>
+            app:layout_constraintGuide_percent="0.3"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake1Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.0375"
+            app:layout_constraintGuide_percent="-0.01"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake2X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.68"/>
+            app:layout_constraintGuide_percent="0.7"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake2Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.029"
+            app:layout_constraintGuide_percent="-0.02"
             />
 
         <androidx.constraintlayout.widget.Guideline
@@ -84,170 +84,170 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.5"/>
+            app:layout_constraintGuide_percent="0.54"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake3Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.2"
+            app:layout_constraintGuide_percent="0.1"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake4X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.27"/>
+            app:layout_constraintGuide_percent="0.3"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake4Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.15"
+            app:layout_constraintGuide_percent="0.069"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake5X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.05"/>
+            app:layout_constraintGuide_percent="0.1"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake5Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.239"
+            app:layout_constraintGuide_percent="0.19"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake6X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.05"/>
+            app:layout_constraintGuide_percent="0.09"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake6Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.439"
+            app:layout_constraintGuide_percent="0.40"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake7X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.27"/>
+            app:layout_constraintGuide_percent="0.365"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake7Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.55"
+            app:layout_constraintGuide_percent="0.5"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake8X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.65"/>
+            app:layout_constraintGuide_percent="0.745"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake8Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.35"
+            app:layout_constraintGuide_percent="0.315"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake9X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.67"/>
+            app:layout_constraintGuide_percent="0.765"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/snake9Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.75"
+            app:layout_constraintGuide_percent="0.715"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair1X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.57"
+            app:layout_constraintGuide_percent="0.7"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair1Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.045"/>
+            app:layout_constraintGuide_percent="-0.018"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair2X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.02"
+            app:layout_constraintGuide_percent="0.1"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair2Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.4"/>
+            app:layout_constraintGuide_percent="0.39"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair3X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.05"
+            app:layout_constraintGuide_percent="0.1"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair3Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.11"/>
+            app:layout_constraintGuide_percent="0.06"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair4X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.45"
+            app:layout_constraintGuide_percent="0.51"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair4Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.74"/>
+            app:layout_constraintGuide_percent="0.68"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair5X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.65"
+            app:layout_constraintGuide_percent="0.69"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/stair5Y"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.42"/>
+            app:layout_constraintGuide_percent="0.36"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/player1X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="-0.01"
+            app:layout_constraintGuide_percent="0"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/player2X"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.08"
+            app:layout_constraintGuide_percent="0.14"
             />
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/playerY"
@@ -271,90 +271,90 @@
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.235"
+            app:layout_constraintHeight_percent="0.335"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake1"
-            android:rotation="315"
+            android:rotation="310"
             app:layout_constraintStart_toStartOf="@id/snake2X"
             app:layout_constraintTop_toTopOf="@id/snake2Y"
             />
         <ImageView
             android:layout_height="0dp"
             android:layout_width="0dp"
-            app:layout_constraintHeight_percent="0.225"
+            app:layout_constraintHeight_percent="0.325"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake2"
-            android:rotation="120"
+            android:rotation="112"
             app:layout_constraintStart_toStartOf="@id/snake1X"
             app:layout_constraintTop_toTopOf="@+id/snake1Y"
             />
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.235"
+            app:layout_constraintHeight_percent="0.335"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake1"
-            android:rotation="315"
+            android:rotation="300"
             app:layout_constraintStart_toStartOf="@id/snake4X"
             app:layout_constraintTop_toTopOf="@id/snake4Y"
             />
         <ImageView
             android:layout_height="0dp"
             android:layout_width="0dp"
-            app:layout_constraintHeight_percent="0.225"
+            app:layout_constraintHeight_percent="0.325"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake2"
-            android:rotation="205"
+            android:rotation="220"
             app:layout_constraintStart_toStartOf="@id/snake3X"
             app:layout_constraintTop_toTopOf="@+id/snake3Y"
             />
         <ImageView
             android:layout_height="0dp"
             android:layout_width="0dp"
-            app:layout_constraintHeight_percent="0.225"
+            app:layout_constraintHeight_percent="0.325"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake2"
-            android:rotation="120"
+            android:rotation="112"
             app:layout_constraintStart_toStartOf="@id/snake5X"
             app:layout_constraintTop_toTopOf="@+id/snake5Y"
             />
         <ImageView
             android:layout_height="0dp"
             android:layout_width="0dp"
-            app:layout_constraintHeight_percent="0.225"
+            app:layout_constraintHeight_percent="0.325"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake2"
-            android:rotation="120"
+            android:rotation="112"
             app:layout_constraintStart_toStartOf="@id/snake6X"
             app:layout_constraintTop_toTopOf="@+id/snake6Y"
             />
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.235"
+            app:layout_constraintHeight_percent="0.335"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake1"
-            android:rotation="35"
+            android:rotation="52"
             app:layout_constraintStart_toStartOf="@id/snake7X"
             app:layout_constraintTop_toTopOf="@id/snake7Y"
             />
         <ImageView
             android:layout_height="0dp"
             android:layout_width="0dp"
-            app:layout_constraintHeight_percent="0.225"
+            app:layout_constraintHeight_percent="0.325"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake2"
-            android:rotation="205"
+            android:rotation="215"
             app:layout_constraintStart_toStartOf="@id/snake8X"
             app:layout_constraintTop_toTopOf="@+id/snake8Y"
             />
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.235"
+            app:layout_constraintHeight_percent="0.335"
             app:layout_constraintDimensionRatio="1:1"
             android:src="@drawable/snake1"
-            android:rotation="35"
+            android:rotation="52"
             app:layout_constraintStart_toStartOf="@id/snake9X"
             app:layout_constraintTop_toTopOf="@id/snake9Y"
             />
@@ -362,8 +362,8 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:src="@drawable/stair"
-            android:rotation="40"
-            app:layout_constraintHeight_percent="0.35"
+            android:rotation="52"
+            app:layout_constraintHeight_percent="0.45"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintStart_toStartOf="@id/stair1X"
             app:layout_constraintTop_toTopOf="@id/stair1Y"
@@ -372,38 +372,38 @@
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:rotation="52"
+            android:rotation="62"
             android:src="@drawable/stair"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintHeight_percent="0.55"
             app:layout_constraintStart_toStartOf="@id/stair2X"
             app:layout_constraintTop_toTopOf="@id/stair2Y" />
 
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:rotation="335"
+            android:rotation="315"
             android:src="@drawable/stair"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintHeight_percent="0.38"
             app:layout_constraintStart_toStartOf="@id/stair3X"
             app:layout_constraintTop_toTopOf="@id/stair3Y" />
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:rotation="44"
+            android:rotation="62"
             android:src="@drawable/stair"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintHeight_percent="0.38"
             app:layout_constraintStart_toStartOf="@id/stair4X"
             app:layout_constraintTop_toTopOf="@id/stair4Y" />
         <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:rotation="335"
+            android:rotation="315"
             android:src="@drawable/stair"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintHeight_percent="0.26"
+            app:layout_constraintHeight_percent="0.38"
             app:layout_constraintStart_toStartOf="@id/stair5X"
             app:layout_constraintTop_toTopOf="@id/stair5Y" />
         <ImageView

@@ -16,8 +16,12 @@ import android.view.ViewGroup
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.PersistableBundle
+import android.util.Log
+import android.widget.LinearLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.toColorInt
+import androidx.core.view.children
+import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import androidx.lifecycle.lifecycleScope
 import com.example.boardgame.ui.theme.BoardGameTheme
@@ -29,6 +33,9 @@ import kotlin.math.abs
 
 class MainActivity : ComponentActivity() {
     lateinit var resetBtn : Button
+    lateinit var resetGameOver : Button
+    lateinit var gameOverText: TextView
+    lateinit var overlayGameOver : ConstraintLayout
     lateinit var diceImg : ImageView
     lateinit var player1 : TextView
     lateinit var player1Icon : ImageView
@@ -37,6 +44,9 @@ class MainActivity : ComponentActivity() {
     lateinit var turn : TextView
     lateinit var tiles : ArrayList<TextView>
     lateinit var grid : GridLayout
+//    private val fireworks : FireworksView by lazy {findViewById<FireworksView>(R.id.fireworksview)}
+
+    private lateinit var fireworks : FireworksView
     var sizeTile : Int = 0
     var heightTile : Int = 0
 
@@ -64,19 +74,45 @@ class MainActivity : ComponentActivity() {
         3 to 14
     )
     var player1Turn = 1;
+    var diceVal = 1;
     override fun onSaveInstanceState(outState : Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("player1Pos", player1Pos)
         outState.putInt("player2Pos", player2Pos)
-        outState.putInt("DiceVAL", 1)
+        outState.putInt("player1Turn", player1Turn)
+        outState.putInt("diceVal", diceVal)
+    }
+
+    fun updateDiceImg() {
+        val imgSrc = when(diceVal) {
+            1 -> R.drawable.dice_one
+            2 -> R.drawable.dice_two
+            3 -> R.drawable.dice_three
+            4 -> R.drawable.dice_four
+            5 -> R.drawable.dice_five
+            else -> R.drawable.dice_six
+        }
+        diceImg.setImageResource(imgSrc)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
-        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
+//        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
+//        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
+        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 48
+        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 48
+        diceVal = savedInstanceState?.getInt("diceVal") ?: 1
+        diceImg = findViewById<ImageView>(R.id.dice_image)
+        if(diceVal != 1) {
+            updateDiceImg()
+        }
 
+        fireworks = findViewById<FireworksView>(R.id.fireworks)
+        if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+//            fireworks.stop()
+        }
         if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//            fireworks.stop()
             sizeTile = (resources.displayMetrics.heightPixels) / 9
             heightTile = (sizeTile * 3) / 4
 
@@ -85,25 +121,21 @@ class MainActivity : ComponentActivity() {
             sizeTile = resources.displayMetrics.widthPixels / 6
             heightTile = (sizeTile * 3) / 4
         }
+
+        overlayGameOver = findViewById<ConstraintLayout>(R.id.overlay_game_over)
+        gameOverText = findViewById<TextView>(R.id.player_wins)
         player1 = findViewById<TextView>(R.id.player1)
         player2 = findViewById<TextView>(R.id.player2)
         turn = findViewById<TextView>(R.id.player_turn)
         player1Icon = findViewById<ImageView>(R.id.player1icon)
         player2Icon = findViewById<ImageView>(R.id.player2icon)
-        if(player1Pos != 0) {
-            changePosition(player1Icon, 0, player1Pos - 1)
-            player1.text = getString(R.string.player_1_dynamic, player1Pos)
-
-        }
-        if(player2Pos != 0) {
-            changePosition(player2Icon, 0, player2Pos - 1)
-            player2.text = getString(R.string.player_2_dynamic, player2Pos)
-        }
         resetBtn = findViewById<Button>(R.id.reset_game)
-        diceImg = findViewById<ImageView>(R.id.dice_image)
+        resetGameOver = findViewById<Button>(R.id.reset_game_overlay)
         grid = findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
-        val padding = (8 * resources.displayMetrics.density).toInt()
+
+        player1Turn = savedInstanceState?.getInt("player1Turn") ?: 0
+//        val padding = (8 * resources.displayMetrics.density).toInt()
 
         var i = 50
         var j = i
@@ -120,7 +152,21 @@ class MainActivity : ComponentActivity() {
             }
             i -= 6
         }
+
+            player1.text = getString(R.string.player_1_dynamic, player1Pos)
+            player2.text = getString(R.string.player_2_dynamic, player2Pos)
+
+        tiles[0].post({
+
+        if(player2Pos != 0)
+            changePosition(player2Icon, 0, player2Pos - 1)
+        if(player1Pos != 0)
+            changePosition(player1Icon, 0, player1Pos - 1)
+
+        })
+        turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener(::resetGameCheck)
+        resetGameOver.setOnClickListener(::resetGame)
         diceImg.setOnClickListener(::diceHandler)
     }
     fun addTile(i : Int) {
@@ -152,37 +198,40 @@ class MainActivity : ComponentActivity() {
         return (1..6).random()
     }
 
-    fun winner(message : String){
+    fun winner(i : Int){
+        gameOverText.text = getString(R.string.player_wins, i)
+        overlayGameOver.visibility = View.VISIBLE
         turn.text = getString(R.string.game_over)
         diceImg.isEnabled = false
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Player $i Wins", Toast.LENGTH_LONG).show()
+        fireworks.visibility = View.VISIBLE
+        fireworks.bringToFront()
+        fireworks.start()
+//        fireworks.postDelayed({
+//            fireworks.stop()
+//            fireworks.visibility = View.GONE
+//        }, 12000)
     }
 
     fun diceHandler(view : View) {
         diceImg.isEnabled = false
-        val diceVal = diceRoll()
+        diceVal = diceRoll()
 
         diceImg.animate().rotationBy(360f).duration = 300
 
         lifecycleScope.launch {
             delay(300)
-            updateDiceValue(diceVal)
+            updateDiceValue()
         }
 
 
     }
 
-    suspend fun updateDiceValue(diceVal : Int) {
 
-        val imgSrc = when(diceVal) {
-            1 -> R.drawable.dice_one
-            2 -> R.drawable.dice_two
-            3 -> R.drawable.dice_three
-            4 -> R.drawable.dice_four
-            5 -> R.drawable.dice_five
-            else -> R.drawable.dice_six
-        }
-        diceImg.setImageResource(imgSrc)
+    suspend fun updateDiceValue() {
+
+        updateDiceImg()
+
         if(player1Turn == 1) {
             val start = player1Pos - 1
             player1Pos += diceVal
@@ -195,7 +244,7 @@ class MainActivity : ComponentActivity() {
                 changePosition(player1Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.BLUE)
-                winner("Player 1 wins")
+                winner(1)
                 return
             }
             if(snakes.containsKey(player1Pos)) {
@@ -234,7 +283,7 @@ class MainActivity : ComponentActivity() {
                 changePosition(player2Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.RED)
-                winner("Player 2 wins")
+                winner(2)
                 return
             }
 
@@ -266,6 +315,10 @@ class MainActivity : ComponentActivity() {
     }
 
     fun resetGame(view : View) {
+            fireworks.stop()
+            if(overlayGameOver.isVisible) {
+                overlayGameOver.visibility = View.GONE
+            }
             player1Pos = 0
             player2Pos = 0
             player1Turn = 1

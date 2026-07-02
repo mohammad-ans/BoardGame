@@ -9,5 +9,6 @@
     <string name="roll_dice">Roll Dice</string>
     <string name="reset_game">Reset Game</string>
     <string name="dice_description">A dice image</string>
+    <string name="player_wins">Player %1$d Wins</string>
     <string name="game_over">Game Over</string>
 </resources>

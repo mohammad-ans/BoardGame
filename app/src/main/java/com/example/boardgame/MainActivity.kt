@@ -21,6 +21,7 @@ import android.widget.LinearLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.toColorInt
 import androidx.core.view.children
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.min
 
 
 class MainActivity : ComponentActivity() {
@@ -73,14 +75,15 @@ class MainActivity : ComponentActivity() {
         11 to 28,
         3 to 14
     )
-    var player1Turn = 1;
-    var diceVal = 1;
+    var player1Turn = 1
+    var diceVal = 1
     override fun onSaveInstanceState(outState : Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("player1Pos", player1Pos)
         outState.putInt("player2Pos", player2Pos)
         outState.putInt("player1Turn", player1Turn)
         outState.putInt("diceVal", diceVal)
+        outState.putBoolean("fireworks_running", fireworks.isRunning())
     }
 
     fun updateDiceImg() {
@@ -99,31 +102,38 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
 //        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
 //        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
-        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 48
-        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 48
+        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
+        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 40
         diceVal = savedInstanceState?.getInt("diceVal") ?: 1
+        val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
+
         diceImg = findViewById<ImageView>(R.id.dice_image)
         if(diceVal != 1) {
             updateDiceImg()
         }
-
         fireworks = findViewById<FireworksView>(R.id.fireworks)
-        if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            fireworks.stop()
+        overlayGameOver = findViewById<ConstraintLayout>(R.id.overlay_game_over)
+        gameOverText = findViewById<TextView>(R.id.player_wins)
+
+        if(fireworksRunning){
+            diceImg.isEnabled = false
+            fireworks.start()
+            overlayGameOver.visibility = View.VISIBLE
+            var i = 2
+            if(player1Pos >= 50){
+                i = 1
+            }
+            gameOverText.text = getString(R.string.player_wins, i)
         }
         if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//            fireworks.stop()
             sizeTile = (resources.displayMetrics.heightPixels) / 9
             heightTile = (sizeTile * 3) / 4
-
         }
         else{
             sizeTile = resources.displayMetrics.widthPixels / 6
             heightTile = (sizeTile * 3) / 4
         }
 
-        overlayGameOver = findViewById<ConstraintLayout>(R.id.overlay_game_over)
-        gameOverText = findViewById<TextView>(R.id.player_wins)
         player1 = findViewById<TextView>(R.id.player1)
         player2 = findViewById<TextView>(R.id.player2)
         turn = findViewById<TextView>(R.id.player_turn)
@@ -134,7 +144,7 @@ class MainActivity : ComponentActivity() {
         grid = findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
 
-        player1Turn = savedInstanceState?.getInt("player1Turn") ?: 0
+        player1Turn = savedInstanceState?.getInt("player1Turn") ?: 1
 //        val padding = (8 * resources.displayMetrics.density).toInt()
 
         var i = 50
@@ -156,14 +166,14 @@ class MainActivity : ComponentActivity() {
             player1.text = getString(R.string.player_1_dynamic, player1Pos)
             player2.text = getString(R.string.player_2_dynamic, player2Pos)
 
-        tiles[0].post({
+        tiles[0].doOnLayout{
 
         if(player2Pos != 0)
-            changePosition(player2Icon, 0, player2Pos - 1)
+            changePosition(player2Icon, 0, min(player2Pos - 1, 49))
         if(player1Pos != 0)
-            changePosition(player1Icon, 0, player1Pos - 1)
+            changePosition(player1Icon, 0, min(player1Pos - 1, 49))
 
-        })
+        }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener(::resetGameCheck)
         resetGameOver.setOnClickListener(::resetGame)
@@ -233,6 +243,7 @@ class MainActivity : ComponentActivity() {
         updateDiceImg()
 
         if(player1Turn == 1) {
+            player1Turn = 2
             val start = player1Pos - 1
             player1Pos += diceVal
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
@@ -268,9 +279,9 @@ class MainActivity : ComponentActivity() {
             player1.text = getString(R.string.player_1_dynamic, player1Pos)
             changePosition(player1Icon, start, player1Pos - 1)
 
-            player1Turn = 2
         }
         else{
+            player1Turn = 1
             val start = player2Pos - 1
             player2Pos += diceVal
 
@@ -308,7 +319,6 @@ class MainActivity : ComponentActivity() {
             animationLaunch.join()
             player2.text = getString(R.string.player_2_dynamic, player2Pos)
             changePosition(player2Icon, start, player2Pos - 1)
-            player1Turn = 1
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         diceImg.isEnabled = true
@@ -334,7 +344,7 @@ class MainActivity : ComponentActivity() {
     }
     fun resetGameCheck(view : View) {
         if(gameEnd()) {
-            resetGame(view);
+            resetGame(view)
         }
         else if(player1Pos == 0 && player2Pos == 0){
             Toast.makeText(this, "Game is already at starting point.", Toast.LENGTH_LONG ).show()

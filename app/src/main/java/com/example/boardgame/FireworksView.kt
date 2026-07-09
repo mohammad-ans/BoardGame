@@ -86,6 +86,10 @@ class FireworksView @JvmOverloads constructor(
             invalidate()
         }
     }
+    fun isRunning() : Boolean {
+        return animator.isRunning
+    }
+
     private fun bursts() {
         postDelayed({
     if(animator.isRunning){

@@ -14,11 +14,14 @@ import android.view.Gravity
 import android.graphics.Typeface
 import android.view.ViewGroup
 import android.app.AlertDialog
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.PersistableBundle
 import android.util.Log
 import android.widget.LinearLayout
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.view.children
 import androidx.core.view.doOnLayout
@@ -29,6 +32,7 @@ import com.example.boardgame.ui.theme.BoardGameTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.jar.Manifest
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -97,9 +101,31 @@ class MainActivity : ComponentActivity() {
         }
         diceImg.setImageResource(imgSrc)
     }
+    private val requiredPermissions = arrayOf(
+        android.Manifest.permission.BLUETOOTH_ADVERTISE,
+        android.Manifest.permission.BLUETOOTH_SCAN,
+        android.Manifest.permission.BLUETOOTH_CONNECT,
+        android.Manifest.permission.ACCESS_FINE_LOCATION
+    )
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ result->
+        if (result.values.all {it}) {
+//pass
+        }
+        else{
+            Toast.makeText(this, "Nearby Permissions not granted", Toast.LENGTH_LONG).show()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val missing = requiredPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_DENIED
+        }
+        if (missing.isNotEmpty()){
+            permissionLauncher.launch(missing.toTypedArray())
+        }
+
 //        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
 //        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
         player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
@@ -146,39 +172,43 @@ class MainActivity : ComponentActivity() {
 
         player1Turn = savedInstanceState?.getInt("player1Turn") ?: 1
 //        val padding = (8 * resources.displayMetrics.density).toInt()
-
-        var i = 50
-        var j = i
-        while(i > 0) {
-            j = i - 5
-            while(i > j) {
-                addTile(i)
-                i--
-            }
-            i -= 4
-            while(i <= j) {
-                addTile(i)
-                i++
-            }
-            i -= 6
+fun displayBoard(){
+    var i = 50
+    var j = i
+    while(i > 0) {
+        j = i - 5
+        while(i > j) {
+            addTile(i)
+            i--
         }
+        i -= 4
+        while(i <= j) {
+            addTile(i)
+            i++
+        }
+        i -= 6
+    }
 
-            player1.text = getString(R.string.player_1_dynamic, player1Pos)
-            player2.text = getString(R.string.player_2_dynamic, player2Pos)
+    player1.text = getString(R.string.player_1_dynamic, player1Pos)
+    player2.text = getString(R.string.player_2_dynamic, player2Pos)
 
-        tiles[0].doOnLayout{
+    tiles[0].doOnLayout{
 
         if(player2Pos != 0)
             changePosition(player2Icon, 0, min(player2Pos - 1, 49))
         if(player1Pos != 0)
             changePosition(player1Icon, 0, min(player1Pos - 1, 49))
 
-        }
-        turn.text = getString(R.string.player_turn_dynamic, player1Turn)
-        resetBtn.setOnClickListener(::resetGameCheck)
-        resetGameOver.setOnClickListener(::resetGame)
-        diceImg.setOnClickListener(::diceHandler)
     }
+    turn.text = getString(R.string.player_turn_dynamic, player1Turn)
+    resetBtn.setOnClickListener(::resetGameCheck)
+    resetGameOver.setOnClickListener(::resetGame)
+    diceImg.setOnClickListener(::diceHandler)
+}
+
+}
+
+
     fun addTile(i : Int) {
         val temp = TextView(this)
         temp.text = "$i"

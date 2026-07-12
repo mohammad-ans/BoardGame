@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:id="@+id/main.xml">
+<fragment
+    android:id="@+id/mode_fragment"
+    android:name="com.example.boardgame.MenuFragment"
+    android:label="Select Mode"
+    <action
+        android:id="@+id/mode_to_offline_loading"
+        app:destination=""
+        />
+    <action
+        android:id="@+id/mode_to_online_loading"
+        app:destination=""
+        />
+    <action
+        android:id="@+id/mode_to_friendly_loading"
+        app:destination=""
+        />
+    />
+    <fragment
+        android:id="@+id/offline_fragment"
+        android:label="Offline Fragment"
+        android:name=""
+        />
+    <fragment
+        android:id="@+id/online_fragment"
+        android:label="Online Fragment"
+        android:name=""
+        />
+    <fragment
+        android:id="@+id/friendly_fragment"
+        android:label="Friendly Fragment"
+        android:name=""
+        />
+
+
+</navigation>

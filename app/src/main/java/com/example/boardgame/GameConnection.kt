@@ -25,6 +25,6 @@ data class DiscoveredPlayer(
 @Serializable
 data class GameMove(
     val playerId: String,
-    val moveData: String
+    val diceVal: Int
 )
 data class IncomingRequest(val endpointId: String, val playerName: String)

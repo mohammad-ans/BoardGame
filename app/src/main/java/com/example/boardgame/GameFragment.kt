@@ -25,6 +25,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.navigation.navGraphViewModels
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,7 +33,7 @@ import kotlin.math.abs
 import kotlin.math.min
 
 class GameFragment : Fragment(R.layout.gamefragment) {
-    private val sessionViewModel : GameSessionViewModel? = null
+    private val sessionViewModel : GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var gameConnection: GameConnection
 
     lateinit var resetBtn : Button
@@ -47,8 +48,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     lateinit var turn : TextView
     lateinit var tiles : ArrayList<TextView>
     lateinit var grid : GridLayout
-//    private val fireworks : FireworksView by lazy {findViewById<FireworksView>(R.id.fireworksview)}
-
+    lateinit var player2Name : String
+    lateinit var player1Name : String
     private lateinit var fireworks : FireworksView
     var sizeTile : Int = 0
     var heightTile : Int = 0
@@ -87,7 +88,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         outState.putBoolean("fireworks_running", fireworks.isRunning())
     }
 
-    fun updateDiceImg() {
+    fun updateDiceImg(diceVal: Int) {
         val imgSrc = when(diceVal) {
             1 -> R.drawable.dice_one
             2 -> R.drawable.dice_two
@@ -100,25 +101,31 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        gameConnection = sessionViewModel?.connection?: throw IllegalStateException("Game Fragment reached with no active connection")
+        gameConnection = sessionViewModel.connection?: throw IllegalStateException("Game Fragment reached with no active connection")
+        val isHost = sessionViewModel.isHost
+        player1Name = getCurrentName()
+        player2Name = sessionViewModel.playerName
+        player1Turn = if (isHost) 1 else 2
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread{
-                lifecycleScope.launch {
-                    applyMove(move.diceVal, 2)
+                if(move.diceVal == -1){
+                    winner(1)
                 }
+                diceHandler(move.diceVal)
             }
         }
 
-//        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
-//        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
-        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
-        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 40
+        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
+        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
         diceVal = savedInstanceState?.getInt("diceVal") ?: 1
         val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
 
         diceImg = view.findViewById<ImageView>(R.id.dice_image)
         if(diceVal != 1) {
-            updateDiceImg()
+            updateDiceImg(diceVal)
+        }
+        if(player1Turn != 1){
+            diceImg.isEnabled = false
         }
         fireworks = view.findViewById<FireworksView>(R.id.fireworks)
         overlayGameOver = view.findViewById<ConstraintLayout>(R.id.overlay_game_over)
@@ -171,8 +178,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             i -= 6
         }
 
-        player1.text = getString(R.string.player_1_dynamic, player1Pos)
-        player2.text = getString(R.string.player_2_dynamic, player2Pos)
+        player1.text = getString(R.string.player_1_dynamic, player1Name, player1Pos)
+        player2.text = getString(R.string.player_2_dynamic, player2Name, player2Pos)
 
         tiles[0].doOnLayout{
 
@@ -183,10 +190,16 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
-        resetBtn.setOnClickListener(::resetGameCheck)
-        resetGameOver.setOnClickListener(::resetGame)
-        diceImg.setOnClickListener(::diceHandler)
+        resetBtn.setOnClickListener{resetGameCheck()}
+        resetGameOver.setOnClickListener{resetGame(false)}
+        diceImg.setOnClickListener {
+            diceRoll()
+        }
 
+    }
+
+    fun enableDice(){
+        diceImg.isEnabled = true
     }
 
 
@@ -215,8 +228,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         else
             tiles.add(tempVar - 1, temp)
     }
-    fun diceRoll() : Int{
-        return (1..6).random()
+    fun diceRoll() {
+        diceHandler((1..6).random())
     }
 
     fun winner(i : Int){
@@ -228,33 +241,31 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         fireworks.visibility = View.VISIBLE
         fireworks.bringToFront()
         fireworks.start()
-//        fireworks.postDelayed({
-//            fireworks.stop()
-//            fireworks.visibility = View.GONE
-//        }, 12000)
     }
 
-    fun diceHandler(view : View) {
+    fun diceHandler(diceVal: Int) {
         diceImg.isEnabled = false
-        diceVal = diceRoll()
 
-        diceImg.animate().rotationBy(360f).duration = 300
+        diceImg.animate().rotationBy(360f).duration = 400
 
         lifecycleScope.launch {
             delay(300)
-            applyMove(diceVal, 1)
+            applyMove(diceVal)
         }
     }
 
 
-    suspend fun applyMove(diceVal : Int, player : Int) {
+    suspend fun applyMove(diceVal : Int) {
 
-        updateDiceImg()
+        updateDiceImg(diceVal)
 
-        if(player == 1) {
+        if(player1Turn == 1) {
             player1Turn = 2
             val start = player1Pos - 1
             player1Pos += diceVal
+            if(sessionViewModel.connectionType == "online")
+                gameConnection.sendMove(GameMove("Player 1", diceVal))
+
             gameConnection.sendMove(GameMove("Player 1", diceVal))
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
                 setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
@@ -280,15 +291,20 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 animationLaunch.join()
                 val temp = player1Pos - 1
                 player1Pos = ladders.getValue(player1Pos)
-                mainAnimation(temp, player1Pos - 1){
+                stairAnimation(temp, player1Pos - 1){
                     setColor(player1Pos - 1)
                 }
 
             }
             animationLaunch.join()
-            player1.text = getString(R.string.player_1_dynamic, player1Pos)
+            player1.text = getString(R.string.player_1_dynamic, player1Name, player1Pos)
             changePosition(player1Icon, start, player1Pos - 1)
-
+            if (sessionViewModel.connectionType == "bot"){
+                lifecycleScope.launch {
+                    delay(1000)
+                    diceRoll()
+                }
+            }
         }
         else{
             player1Turn = 1
@@ -321,20 +337,25 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 animationLaunch.join()
                 val temp = player2Pos - 1
                 player2Pos = ladders.getValue(player2Pos)
-                mainAnimation(temp, player2Pos - 1){
+                stairAnimation(temp, player2Pos - 1){
                     setColor(player2Pos - 1)
                 }
 
             }
             animationLaunch.join()
-            player2.text = getString(R.string.player_2_dynamic, player2Pos)
+            player2.text = getString(R.string.player_2_dynamic, player2Name, player2Pos)
             changePosition(player2Icon, start, player2Pos - 1)
+            enableDice()
+        }
+        if(sessionViewModel.connectionType == "pvp"){
+            enableDice()
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
-        diceImg.isEnabled = true
     }
 
-    fun resetGame(view : View) {
+    fun resetGame(midGameReset : Boolean = false) {
+        if (midGameReset)
+            winner(2)
         fireworks.stop()
         if(overlayGameOver.isVisible) {
             overlayGameOver.visibility = View.GONE
@@ -347,43 +368,78 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player2.text = getString(R.string.player_2)
         turn.text = getString(R.string.player_turn)
         diceImg.setImageResource(R.drawable.dice_one)
+        enableDice()
         changePosition(player2Icon, player2Pos - 1, 0)
         changePosition(player1Icon, player1Pos - 1, 0)
         resetTiles()
-        diceImg.isEnabled = true
     }
-    fun resetGameCheck(view : View) {
+    fun resetGameCheck() {
         if(gameEnd()) {
-            resetGame(view)
+            resetGame(false)
         }
         else if(player1Pos == 0 && player2Pos == 0){
             Toast.makeText(requireContext(), "Game is already at starting point.", Toast.LENGTH_LONG ).show()
         }
         else{
-            showResetConfirmation(view)
+            if(sessionViewModel.connectionType == "pvp" || sessionViewModel.connectionType == "bot")
+                showResetConfirmation()
+            else
+                showResetConfirmationOnline()
         }
     }
 
-    fun showResetConfirmation(view : View) {
+    fun showResetConfirmation() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset Game?")
             .setMessage("Current game in progress. Are you sure you want to reset?")
-            .setPositiveButton("Reset", {_, _ -> resetGame(view)})
+            .setPositiveButton("Reset", {_, _ -> resetGame(false)})
             .setNegativeButton("Nope", null)
             .setCancelable(true)
             .show()
     }
+    fun showResetConfirmationOnline() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Reset Game?")
+            .setMessage("Current game is in progress. Do you want to forfeit?")
+            .setPositiveButton("Reset", {_, _, -> sendForfeitSignal()})
+            .setNegativeButton("Nope", null)
+            .setCancelable(true)
+            .show()
+    }
+    fun sendForfeitSignal(){
+        gameConnection.sendMove(GameMove("", -1))
+        resetGame(false)
+    }
+
+
 
     fun animation1(pos : Int) {
         resetTiles()
         if(pos > -1)
             tiles[pos].setBackgroundColor(Color.YELLOW)
     }
+    fun animation2(pos : Int) {
+        resetTiles()
+        if(pos > -1)
+            tiles[pos].setBackgroundColor(Color.GREEN)
+    }
     fun mainAnimation(start : Int, end : Int, func : () -> Unit) {
 
         animationLaunch = lifecycleScope.launch {
             for(pos in start..end) {
                 animation1(pos)
+                delay(100)
+            }
+            delay(150)
+            func()
+        }
+    }
+
+    fun stairAnimation(start : Int, end : Int, func : () -> Unit) {
+
+        animationLaunch = lifecycleScope.launch {
+            for(pos in start..end) {
+                animation2(pos)
                 delay(100)
             }
             delay(150)
@@ -398,7 +454,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         return lifecycleScope.launch {
             for(pos in start downTo end) {
                 resetTiles()
-                tiles[pos].setBackgroundColor(Color.YELLOW)
+                tiles[pos].setBackgroundColor(Color.RED)
                 delay(100)
             }
             delay(150)
@@ -436,5 +492,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         if (isRemoving)
             gameConnection.disconnect()
     }
+    fun getCurrentName() : String{
+        return "Player 1"
+    }
+
 
 }

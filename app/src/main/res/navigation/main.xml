@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:app="http://schemas.android.com/apk/res-auto"
              android:id="@+id/nav_graph"
-    app:startDestination="@id/mode_fragment"
+        app:startDestination="@id/mode_fragment"
     >
 <fragment
     android:id="@+id/mode_fragment"
@@ -27,17 +27,32 @@
         android:id="@+id/offline_fragment"
         android:label="Offline Fragment"
         android:name="com.example.boardgame.OfflineFragment"
+>
+    <action
+        android:id="@+id/offline_to_game"
+        app:destination="@id/game_fragment"
         />
+</fragment>
     <fragment
         android:id="@+id/online_fragment"
         android:label="Online Fragment"
         android:name="com.example.boardgame.OnlineFragment"
+>
+    <action
+        android:id="@+id/online_to_game"
+        app:destination="@id/game_fragment"
         />
+</fragment>
     <fragment
         android:id="@+id/friendly_fragment"
         android:label="Friendly Fragment"
         android:name="com.example.boardgame.NearbyFragment"
+>
+    <action
+        android:id="@+id/friendly_to_game"
+        app:destination="@id/game_fragment"
         />
+    </fragment>
 
 
 </navigation>

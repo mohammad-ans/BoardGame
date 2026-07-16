@@ -13,7 +13,8 @@ class MainActivity : AppCompatActivity() {
         android.Manifest.permission.BLUETOOTH_ADVERTISE,
         android.Manifest.permission.BLUETOOTH_SCAN,
         android.Manifest.permission.BLUETOOTH_CONNECT,
-        android.Manifest.permission.ACCESS_FINE_LOCATION
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.NEARBY_WIFI_DEVICES
     )
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ result->
         if (result.values.all {it}) {
@@ -28,7 +29,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val missing = requiredPermissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_DENIED
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (missing.isNotEmpty()) {
             permissionLauncher.launch(missing.toTypedArray())

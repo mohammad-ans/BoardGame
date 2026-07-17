@@ -113,10 +113,12 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player1Turn = if (isHost) 1 else 2
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread{
-                if(move.diceVal == -1){
+                if(move.diceVal == -1)
                     winner(player1Name)
-                }
-                diceHandler(move.diceVal)
+                else if(move.diceVal == -2)
+                    resetGame(false)
+                else
+                    diceHandler(move.diceVal)
             }
         }
 
@@ -196,7 +198,10 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener{resetGameCheck()}
-        resetGameOver.setOnClickListener{resetGame(false)}
+        resetGameOver.setOnClickListener{
+            gameConnection.sendMove(GameMove("Player 1", -2 ))
+            resetGame(false)
+        }
         diceImg.setOnClickListener {
             diceRoll()
         }

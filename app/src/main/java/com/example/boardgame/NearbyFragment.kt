@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.Uri
@@ -66,7 +67,10 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         }
         pendingAction = null
     }
-    private val prefs by lazy { requireContext().getSharedPreferences("permission_prefs", Context.MODE_PRIVATE) }
+//    private val prefs by lazy { requireContext().getSharedPreferences("permission_prefs", Context.MODE_PRIVATE) }
+    private var usernameTwo = "Player"
+
+    var prefs : SharedPreferences? = null
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
         result -> if (result.values.all { it }){
             setup()
@@ -86,8 +90,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
     }
     override fun onViewCreated(view : View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
 
+        prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         status = view.findViewById<TextView>(R.id.nearbyStatus)
         live = view.findViewById<ListView>(R.id.nearbyLive)
         progress = view.findViewById<ProgressBar>(R.id.nearbyProgressSearching)
@@ -108,6 +112,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         live.setOnItemClickListener{_, _, position, _ ->
             val player = discoveredPlayers[position]
             status.text = "Requesting to join ${player.playerName}"
+            usernameTwo = player.playerName
             connection.connectToEndpoint(
                 endpointId = player.endpointId,
                 onOpponentConnected = { onConnected(isHost = false)},
@@ -172,8 +177,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 playersAdapter.clear()
                 playersAdapter.addAll(updatedList.map {it.playerName})
                 playersAdapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), updatedList.get(0).playerName, Toast.LENGTH_LONG).show()
-                Toast.makeText(requireContext(), "${updatedList.get(0).endpointId}", Toast.LENGTH_LONG).show()
                 status.text = if (updatedList.isEmpty()) "Searching for nearby games..." else "Tap a player to join"
             }
 
@@ -186,6 +189,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 .setCancelable(false)
                 .setPositiveButton("Accept") {_,_ ->
                     connection.respondToRequest(request.endpointId, accept = true)
+                    usernameTwo = request.playerName
                 }
                 .setNegativeButton("Decline") {_, _ ->
                     connection.respondToRequest(request.endpointId, accept = false)
@@ -198,7 +202,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private fun onConnected(isHost: Boolean) {
         sessionViewModel.connection = connection
         sessionViewModel.isHost = isHost
-        sessionViewModel.connectionType = "nearby"
+        sessionViewModel.connectionType = "online"
+        prefs?.edit()?.putString("username2", usernameTwo)?.apply()
         requireActivity().runOnUiThread {
             findNavController().navigate(R.id.friendly_to_game)
         }
@@ -206,7 +211,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     }
 
     fun playerName() : String {
-        return "Player ${(1..99).random()}"
+        val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        return prefs.getString("username", "Player")!!
     }
 
     private fun hasAllPermissions(): Boolean{

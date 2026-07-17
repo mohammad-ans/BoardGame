@@ -10,6 +10,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
 import android.app.AlertDialog
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
@@ -100,11 +102,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         diceImg.setImageResource(imgSrc)
     }
 
+    var prefs : SharedPreferences? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         gameConnection = sessionViewModel.connection?: throw IllegalStateException("Game Fragment reached with no active connection")
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
-        player2Name = sessionViewModel.playerName
+        player2Name = prefs?.getString("username2", "Player")!!
         player1Turn = if (isHost) 1 else 2
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread{
@@ -266,7 +271,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             if(sessionViewModel.connectionType == "online")
                 gameConnection.sendMove(GameMove("Player 1", diceVal))
 
-            gameConnection.sendMove(GameMove("Player 1", diceVal))
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
                 setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
             }
@@ -493,7 +497,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.disconnect()
     }
     fun getCurrentName() : String{
-        return "Player 1"
+        val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        return prefs.getString("username", "Player")!!
     }
 
 

@@ -31,6 +31,6 @@ class GameState : ViewModel() {
 class GameSessionViewModel : ViewModel() {
     var connection : GameConnection? = null
     var isHost : Boolean = false
-    var connectionType: String = "offline-p"
+    var connectionType: String = "pvp"
     var playerName : String = "Bot"
 }

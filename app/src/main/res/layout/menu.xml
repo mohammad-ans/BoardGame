@@ -6,6 +6,7 @@
     android:background="@color/teal_700"
     android:orientation="vertical"
     android:gravity="center"
+    android:elevation="1dp"
     >
     <Button
         android:id="@+id/offline_mode"
@@ -21,6 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="50dp"
+        android:elevation="2dp"
         />
     <Button
         android:id="@+id/nearby_mode"
@@ -33,6 +35,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/offline_mode"
+        android:elevation="2dp"
         />
     <Button
         android:id="@+id/online_mode"
@@ -45,8 +48,59 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/nearby_mode"
+        android:elevation="2dp"
         />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/username_input_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent_black"
+        android:elevation="4dp"
+        android:visibility="gone"
+        >
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="240dp"
+            android:layout_height="240dp"
+            android:id="@+id/username_input_area"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:background="@drawable/win_game_border"
+            >
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:hint="Username"
+                android:textColorHint="@color/white"
+                android:id="@+id/username_input"
+                android:textColor="@color/white"
+                android:background="@drawable/grid_border"
+                android:paddingVertical="12dp"
+                android:paddingHorizontal="30dp"
+                android:maxLength="30"
+                />
+            <Button
+                android:id="@+id/username_input_confirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/username_input"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="Confirm"
+                android:background="@drawable/grid_border"
+                android:textColor="@color/white"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="12dp"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

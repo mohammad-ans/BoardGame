@@ -115,8 +115,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             }
         }
 
-        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 0
-        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 0
+        player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
+        player2Pos = savedInstanceState?.getInt("player2Pos") ?: 40
         diceVal = savedInstanceState?.getInt("diceVal") ?: 1
         val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
 

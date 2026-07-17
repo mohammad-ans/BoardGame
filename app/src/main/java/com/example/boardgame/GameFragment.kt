@@ -114,7 +114,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread{
                 if(move.diceVal == -1){
-                    winner(1)
+                    winner(player1Name)
                 }
                 diceHandler(move.diceVal)
             }
@@ -140,9 +140,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             diceImg.isEnabled = false
             fireworks.start()
             overlayGameOver.visibility = View.VISIBLE
-            var i = 2
+            var i = player2Name
             if(player1Pos >= 50){
-                i = 1
+                i = player1Name
             }
             gameOverText.text = getString(R.string.player_wins, i)
         }
@@ -237,12 +237,11 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         diceHandler((1..6).random())
     }
 
-    fun winner(i : Int){
-        gameOverText.text = getString(R.string.player_wins, i)
+    fun winner(playerName : String){
+        gameOverText.text = getString(R.string.player_wins, playerName)
         overlayGameOver.visibility = View.VISIBLE
         turn.text = getString(R.string.game_over)
         diceImg.isEnabled = false
-        Toast.makeText(requireContext(), "Player $i Wins", Toast.LENGTH_LONG).show()
         fireworks.visibility = View.VISIBLE
         fireworks.bringToFront()
         fireworks.start()
@@ -280,7 +279,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 changePosition(player1Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.BLUE)
-                winner(1)
+                winner(player1Name)
                 return
             }
             if(snakes.containsKey(player1Pos)) {
@@ -324,7 +323,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 changePosition(player2Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.RED)
-                winner(2)
+                winner(player2Name)
                 return
             }
 
@@ -359,7 +358,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     fun resetGame(midGameReset : Boolean = false) {
         if (midGameReset)
-            winner(2)
+            winner(player2Name)
         fireworks.stop()
         if(overlayGameOver.isVisible) {
             overlayGameOver.visibility = View.GONE
@@ -412,7 +411,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     fun sendForfeitSignal(){
         gameConnection.sendMove(GameMove("", -1))
-        resetGame(false)
+        resetGame(true)
     }
 
 

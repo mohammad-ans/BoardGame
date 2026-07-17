@@ -9,6 +9,13 @@
     <string name="roll_dice">Roll Dice</string>
     <string name="reset_game">Reset Game</string>
     <string name="dice_description">A dice image</string>
-    <string name="player_wins">Player %1$d Wins</string>
     <string name="game_over">Game Over</string>
+    <string name="player_wins" translatable="false">%1$s Wins</string>
+    <string name="offline_mode">Offline Mode</string>
+    <string name="offline_bot">Play with Bot</string>
+    <string name="offline_pvp">Offline P v P</string>
+    <string name="nearby_mode">Nearby Mode</string>
+    <string name="online_mode">Online Mode</string>
+    <string name="online_player">Random Match</string>
+    <string name="online_friend">Play with Friend</string>
 </resources>

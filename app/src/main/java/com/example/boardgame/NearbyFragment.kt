@@ -1,10 +1,13 @@
 package com.example.boardgame
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -17,7 +20,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.registerForActivityResult
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
+import androidx.core.location.LocationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -44,6 +50,22 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private var check = 0
     private var discoveredPlayers: List<DiscoveredPlayer> = emptyList()
     private lateinit var playersAdapter: ArrayAdapter<String>
+    private val bluetoothAdapter: BluetoothAdapter? by lazy {
+        (requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+    }
+    private var pendingAction: (() -> Unit)? = null
+    private val enableBluetoothLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){result ->
+        if(result.resultCode == Activity.RESULT_OK)
+            pendingAction?.invoke()
+        else {
+            Toast.makeText(
+                requireContext(),
+                "Bluetooth is required to connect to nearby device.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        pendingAction = null
+    }
     private val prefs by lazy { requireContext().getSharedPreferences("permission_prefs", Context.MODE_PRIVATE) }
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
         result -> if (result.values.all { it }){
@@ -55,16 +77,10 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                     it == PackageManager.PERMISSION_GRANTED
                 } && !shouldShowRequestPermissionRationale(permission)
             }
-            if(permanentlyDenied){
+            if(permanentlyDenied)
                 showSettings()
-            }
-            else{
-                Toast.makeText(requireContext(), "Nearby playing requires BLUETOOTH, WIFI and LOCATION Permissions to work", Toast.LENGTH_LONG).show()
-                view?.post{
-                    findNavController().popBackStack()
-                }
-            }
-
+            else
+                goBack("Nearby playing requires BLUETOOTH, WIFI and LOCATION Permissions to work")
 
         }
 
@@ -84,12 +100,11 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         if(!hasAllPermissions()) {
             permissionLauncher.launch(requiredPermissions)
         }
-
-
     }
+
     private fun setup(){
-        btnHost.setOnClickListener{startHostFlow()}
-        btnJoin.setOnClickListener { startJoinFlow() }
+        btnHost.setOnClickListener{ checkLocation {  checkBluetooth {startHostFlow() }}}
+        btnJoin.setOnClickListener { checkLocation {  checkBluetooth {startJoinFlow()} }}
         live.setOnItemClickListener{_, _, position, _ ->
             val player = discoveredPlayers[position]
             status.text = "Requesting to join ${player.playerName}"
@@ -105,11 +120,30 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
         }
     }
-//    private fun checkBluetooth(){
-//        if (BluetoothAdapter.STATE_OFF){
-//            BluetoothAdapter.enable
-//        }
-//    }
+    private fun checkBluetooth(f : () -> Unit){
+        if(bluetoothAdapter?.isEnabled == true)
+            f()
+        else {
+            pendingAction = f
+            enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        }
+    }
+    private fun checkLocation(f: () -> Unit){
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (LocationManagerCompat.isLocationEnabled(locationManager))
+            f()
+        else{
+            AlertDialog.Builder(requireContext())
+                .setTitle("Location Required")
+                .setMessage("Nearby play needs location service ON")
+                .setCancelable(false)
+                .setPositiveButton("Open Settings"){_,_, ->
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
     private fun startHostFlow() {
         btnHost.isEnabled = false
         btnJoin.isEnabled = false
@@ -138,6 +172,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 playersAdapter.clear()
                 playersAdapter.addAll(updatedList.map {it.playerName})
                 playersAdapter.notifyDataSetChanged()
+                Toast.makeText(requireContext(), updatedList.get(0).playerName, Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "${updatedList.get(0).endpointId}", Toast.LENGTH_LONG).show()
                 status.text = if (updatedList.isEmpty()) "Searching for nearby games..." else "Tap a player to join"
             }
 
@@ -190,8 +226,12 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 startActivity(intent)
                 check = 1
             }.setNegativeButton("Cancel"){_,_, ->
-                findNavController().popBackStack()
+                goBack("No way to play without permissions")
             }.show()
+    }
+    private fun goBack(text : String){
+        findNavController().popBackStack()
+        Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
     }
 
     override fun onResume() {
@@ -199,8 +239,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         if(hasAllPermissions())
             setup()
         else if(check == 1){
-            Toast.makeText(requireContext(), "Grant permissions to play", Toast.LENGTH_LONG).show()
-            findNavController().popBackStack()
+            goBack("Grant permissions to play")
         }
 
     }

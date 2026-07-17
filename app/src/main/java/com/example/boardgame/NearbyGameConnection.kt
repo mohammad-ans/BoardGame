@@ -1,6 +1,7 @@
 package com.example.boardgame
 
 import android.content.Context
+import android.widget.Toast
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -80,7 +81,14 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
 
         connectionsClient.startAdvertising(
             localPlayerName, serviceID, connectionLifecycleCallback, options
-        )
+        ).addOnSuccessListener {
+            Toast.makeText(context, "Advertising was successfull", Toast.LENGTH_LONG).show()
+        }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "${e.cause}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
     }
 
     override fun respondToRequest(endpointId: String, accept: Boolean){
@@ -105,6 +113,14 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
         }
         val options = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
         connectionsClient.startDiscovery(serviceID, discoveryCallback, options)
+            .addOnSuccessListener {
+            Toast.makeText(context, "Discovery was successfull", Toast.LENGTH_LONG).show()
+        }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "${e.cause}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
     }
     override fun connectToEndpoint(endpointId : String, onOpponentConnected: () -> Unit, onRejected: () -> Unit) {
         this.onOpponentConnected = onOpponentConnected

@@ -17,6 +17,9 @@
     <action
         android:id="@+id/mode_to_friendly_loading"
         app:destination="@id/friendly_fragment" />
+    <action
+        android:id="@+id/mode_to_profile"
+        app:destination="@id/profile_fragment"/>
 </fragment>
     <fragment
         android:id="@+id/game_fragment"
@@ -52,6 +55,13 @@
         android:id="@+id/friendly_to_game"
         app:destination="@id/game_fragment"
         />
+    </fragment>
+    <fragment
+        android:id="@+id/profile_fragment"
+        android:name="com.example.boardgame.ProfileFragment"
+        android:label="Profile Fragment"
+        >
+
     </fragment>
 
 

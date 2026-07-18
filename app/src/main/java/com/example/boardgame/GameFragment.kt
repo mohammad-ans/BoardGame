@@ -117,6 +117,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     winner(player1Name)
                 else if(move.diceVal == -2)
                     resetGame(false)
+                else if(move.diceVal == 0)
+                    winner(player1Name)
                 else
                     diceHandler(move.diceVal)
             }
@@ -199,7 +201,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener{resetGameCheck()}
         resetGameOver.setOnClickListener{
-            gameConnection.sendMove(GameMove("Player 1", -2 ))
+            gameConnection.sendMove(GameMove(player1Name, -2 ))
             resetGame(false)
         }
         diceImg.setOnClickListener {
@@ -272,8 +274,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             player1Turn = 2
             val start = player1Pos - 1
             player1Pos += diceVal
-            if(sessionViewModel.connectionType == "online")
-                gameConnection.sendMove(GameMove("Player 1", diceVal))
+            gameConnection.sendMove(GameMove(player1Name, diceVal))
 
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
                 setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
@@ -415,7 +416,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             .show()
     }
     fun sendForfeitSignal(){
-        gameConnection.sendMove(GameMove("", -1))
+        gameConnection.sendMove(GameMove(player1Name, -1))
         resetGame(true)
     }
 
@@ -498,6 +499,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     override fun onDestroyView() {
         super.onDestroyView()
         if (isRemoving)
+            gameConnection.sendMove(GameMove(player1Name, 0))
             gameConnection.disconnect()
     }
     fun getCurrentName() : String{

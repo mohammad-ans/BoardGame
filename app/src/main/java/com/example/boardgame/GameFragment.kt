@@ -10,6 +10,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
 import android.app.AlertDialog
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
@@ -100,18 +102,23 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         diceImg.setImageResource(imgSrc)
     }
 
+    var prefs : SharedPreferences? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         gameConnection = sessionViewModel.connection?: throw IllegalStateException("Game Fragment reached with no active connection")
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
-        player2Name = sessionViewModel.playerName
+        player2Name = prefs?.getString("username2", "Player")!!
         player1Turn = if (isHost) 1 else 2
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread{
-                if(move.diceVal == -1){
-                    winner(1)
-                }
-                diceHandler(move.diceVal)
+                if(move.diceVal == -1)
+                    winner(player1Name)
+                else if(move.diceVal == -2)
+                    resetGame(false)
+                else
+                    diceHandler(move.diceVal)
             }
         }
 
@@ -135,9 +142,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             diceImg.isEnabled = false
             fireworks.start()
             overlayGameOver.visibility = View.VISIBLE
-            var i = 2
+            var i = player2Name
             if(player1Pos >= 50){
-                i = 1
+                i = player1Name
             }
             gameOverText.text = getString(R.string.player_wins, i)
         }
@@ -191,7 +198,10 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener{resetGameCheck()}
-        resetGameOver.setOnClickListener{resetGame(false)}
+        resetGameOver.setOnClickListener{
+            gameConnection.sendMove(GameMove("Player 1", -2 ))
+            resetGame(false)
+        }
         diceImg.setOnClickListener {
             diceRoll()
         }
@@ -232,12 +242,11 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         diceHandler((1..6).random())
     }
 
-    fun winner(i : Int){
-        gameOverText.text = getString(R.string.player_wins, i)
+    fun winner(playerName : String){
+        gameOverText.text = getString(R.string.player_wins, playerName)
         overlayGameOver.visibility = View.VISIBLE
         turn.text = getString(R.string.game_over)
         diceImg.isEnabled = false
-        Toast.makeText(requireContext(), "Player $i Wins", Toast.LENGTH_LONG).show()
         fireworks.visibility = View.VISIBLE
         fireworks.bringToFront()
         fireworks.start()
@@ -266,7 +275,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             if(sessionViewModel.connectionType == "online")
                 gameConnection.sendMove(GameMove("Player 1", diceVal))
 
-            gameConnection.sendMove(GameMove("Player 1", diceVal))
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
                 setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
             }
@@ -276,7 +284,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 changePosition(player1Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.BLUE)
-                winner(1)
+                winner(player1Name)
                 return
             }
             if(snakes.containsKey(player1Pos)) {
@@ -320,7 +328,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 changePosition(player2Icon, start, winningPoints - 1)
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.RED)
-                winner(2)
+                winner(player2Name)
                 return
             }
 
@@ -355,7 +363,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     fun resetGame(midGameReset : Boolean = false) {
         if (midGameReset)
-            winner(2)
+            winner(player2Name)
         fireworks.stop()
         if(overlayGameOver.isVisible) {
             overlayGameOver.visibility = View.GONE
@@ -408,7 +416,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     fun sendForfeitSignal(){
         gameConnection.sendMove(GameMove("", -1))
-        resetGame(false)
+        resetGame(true)
     }
 
 
@@ -493,7 +501,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.disconnect()
     }
     fun getCurrentName() : String{
-        return "Player 1"
+        val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        return prefs.getString("username", "Player")!!
     }
 
 

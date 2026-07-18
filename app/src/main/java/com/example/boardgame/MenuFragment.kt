@@ -1,5 +1,7 @@
 package com.example.boardgame
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -12,12 +14,20 @@ class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var usernameInput: EditText
     private lateinit var usernameConfirm : Button
     private lateinit var usernameOverlay : ConstraintLayout
+    var prefs : SharedPreferences? = null
+
     override fun onViewCreated(view : View, savedInstanceState : Bundle?) {
         usernameInput = view.findViewById<EditText>(R.id.username_input)
         usernameConfirm = view.findViewById<Button>(R.id.username_input_confirm)
         usernameOverlay = view.findViewById<ConstraintLayout>(R.id.username_input_overlay)
-        if(!checkUsername()){
+        prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        val username = getUsername()
+        if(username == null){
             usernameOverlay.visibility = View.VISIBLE
+        }
+        usernameConfirm.setOnClickListener{
+            prefs?.edit()?.putString("username", usernameInput.text.toString())?.apply()
+            usernameOverlay.visibility = View.GONE
         }
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<Button>(R.id.offline_mode).setOnClickListener {
@@ -30,9 +40,8 @@ class MenuFragment : Fragment(R.layout.menu) {
             findNavController().navigate(R.id.mode_to_friendly_loading)
         }
     }
-    private fun checkUsername() : Boolean{
-        if(true)
-            return true
-        return false
+    private fun getUsername() : String?{
+        val username = prefs?.getString("username", null)
+        return username
     }
 }

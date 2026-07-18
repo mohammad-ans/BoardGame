@@ -498,9 +498,10 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     override fun onDestroyView() {
         super.onDestroyView()
-        if (isRemoving)
+        if (isRemoving) {
             gameConnection.sendMove(GameMove(player1Name, 0))
             gameConnection.disconnect()
+        }
     }
     fun getCurrentName() : String{
         val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
@@ -508,4 +509,4 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
 
 
-}
+}\

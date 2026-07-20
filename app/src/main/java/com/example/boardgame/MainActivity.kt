@@ -1,7 +1,6 @@
 package com.example.boardgame
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat

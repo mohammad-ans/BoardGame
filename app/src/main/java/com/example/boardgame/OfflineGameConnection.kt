@@ -8,7 +8,8 @@ class OfflineGameConnection(private val context : Context, val playerName : Stri
     }
 
     override fun sendMove(move: GameMove) {
-
+//        if(move.diceVal < 1)
+//            moveCallback?.invoke(move)
     }
 
     override fun onMoveReceived(callback: (GameMove) -> Unit) {

@@ -1,6 +1,4 @@
 package com.example.boardgame
-
-
 import androidx.core.graphics.toColorInt
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
@@ -17,9 +15,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.GridLayout
 import android.widget.ImageView
@@ -29,35 +25,31 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.navigation.navGraphViewModels
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.min
 
 class GameFragment : Fragment(R.layout.gamefragment) {
-    private val sessionViewModel : GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
+    private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var gameConnection: GameConnection
 
-    lateinit var resetBtn : Button
-    lateinit var resetGameOver : Button
+    lateinit var resetBtn: Button
+    lateinit var resetGameOver: Button
     lateinit var gameOverText: TextView
-    lateinit var overlayGameOver : ConstraintLayout
-    lateinit var diceImg : ImageView
-    lateinit var player1 : TextView
-    lateinit var player1Icon : ImageView
-    lateinit var player2 : TextView
-    lateinit var player2Icon : ImageView
-    lateinit var turn : TextView
-    lateinit var tiles : ArrayList<TextView>
-    lateinit var grid : GridLayout
-    lateinit var player2Name : String
-    lateinit var player1Name : String
-    private lateinit var fireworks : FireworksView
-    var sizeTile : Int = 0
-    var heightTile : Int = 0
+    lateinit var overlayGameOver: ConstraintLayout
+    lateinit var diceImg: ImageView
+    lateinit var player1: TextView
+    lateinit var player1Icon: ImageView
+    lateinit var player2: TextView
+    lateinit var player2Icon: ImageView
+    lateinit var turn: TextView
+    lateinit var tiles: ArrayList<TextView>
+    lateinit var grid: GridLayout
+    lateinit var player2Name: String
+    lateinit var player1Name: String
+    private lateinit var fireworks: FireworksView
+    var sizeTile: Int = 0
+    var heightTile: Int = 0
 
-    lateinit var animationLaunch : Job
-    lateinit var reverseAnimationLaunch : Job
+    lateinit var animationLaunch: Job
+    lateinit var reverseAnimationLaunch: Job
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
@@ -70,7 +62,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         35 to 24,
         30 to 19,
         23 to 12,
-        15 to 4)
+        15 to 4
+    )
     val ladders = mapOf<Int, Int>(
 
         34 to 46,
@@ -81,7 +74,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     )
     var player1Turn = 1
     var diceVal = 1
-    override fun onSaveInstanceState(outState : Bundle) {
+    override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("player1Pos", player1Pos)
         outState.putInt("player2Pos", player2Pos)
@@ -91,7 +84,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
 
     fun updateDiceImg(diceVal: Int) {
-        val imgSrc = when(diceVal) {
+        val imgSrc = when (diceVal) {
             1 -> R.drawable.dice_one
             2 -> R.drawable.dice_two
             3 -> R.drawable.dice_three
@@ -102,21 +95,24 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         diceImg.setImageResource(imgSrc)
     }
 
-    var prefs : SharedPreferences? = null
+    var prefs: SharedPreferences? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-        gameConnection = sessionViewModel.connection?: throw IllegalStateException("Game Fragment reached with no active connection")
+        gameConnection = sessionViewModel.connection
+            ?: throw IllegalStateException("Game Fragment reached with no active connection")
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
         player2Name = prefs?.getString("username2", "Player")!!
         player1Turn = if (isHost) 1 else 2
         gameConnection.onMoveReceived { move ->
-            requireActivity().runOnUiThread{
-                if(move.diceVal == -1)
+            requireActivity().runOnUiThread {
+                if (move.diceVal == -1)
                     winner(player1Name)
-                else if(move.diceVal == -2)
+                else if (move.diceVal == -2)
                     resetGame(false)
+                else if (move.diceVal == 0)
+                    winner(player1Name)
                 else
                     diceHandler(move.diceVal)
             }
@@ -128,31 +124,30 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
 
         diceImg = view.findViewById<ImageView>(R.id.dice_image)
-        if(diceVal != 1) {
+        if (diceVal != 1) {
             updateDiceImg(diceVal)
         }
-        if(player1Turn != 1){
+        if (player1Turn != 1) {
             diceImg.isEnabled = false
         }
         fireworks = view.findViewById<FireworksView>(R.id.fireworks)
         overlayGameOver = view.findViewById<ConstraintLayout>(R.id.overlay_game_over)
         gameOverText = view.findViewById<TextView>(R.id.player_wins)
 
-        if(fireworksRunning){
+        if (fireworksRunning) {
             diceImg.isEnabled = false
             fireworks.start()
             overlayGameOver.visibility = View.VISIBLE
             var i = player2Name
-            if(player1Pos >= 50){
+            if (player1Pos >= 50) {
                 i = player1Name
             }
             gameOverText.text = getString(R.string.player_wins, i)
         }
-        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             sizeTile = (resources.displayMetrics.heightPixels) / 9
             heightTile = (sizeTile * 3) / 4
-        }
-        else{
+        } else {
             sizeTile = resources.displayMetrics.widthPixels / 6
             heightTile = (sizeTile * 3) / 4
         }
@@ -171,14 +166,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
         var i = 50
         var j = i
-        while(i > 0) {
+        while (i > 0) {
             j = i - 5
-            while(i > j) {
+            while (i > j) {
                 addTile(i)
                 i--
             }
             i -= 4
-            while(i <= j) {
+            while (i <= j) {
                 addTile(i)
                 i++
             }
@@ -188,18 +183,18 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player1.text = getString(R.string.player_1_dynamic, player1Name, player1Pos)
         player2.text = getString(R.string.player_2_dynamic, player2Name, player2Pos)
 
-        tiles[0].doOnLayout{
+        tiles[0].doOnLayout {
 
-            if(player2Pos != 0)
+            if (player2Pos != 0)
                 changePosition(player2Icon, 0, min(player2Pos - 1, 49))
-            if(player1Pos != 0)
+            if (player1Pos != 0)
                 changePosition(player1Icon, 0, min(player1Pos - 1, 49))
 
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
-        resetBtn.setOnClickListener{resetGameCheck()}
-        resetGameOver.setOnClickListener{
-            gameConnection.sendMove(GameMove("Player 1", -2 ))
+        resetBtn.setOnClickListener { resetGameCheck() }
+        resetGameOver.setOnClickListener {
+            gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
         }
         diceImg.setOnClickListener {
@@ -208,24 +203,24 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     }
 
-    fun enableDice(){
+    fun enableDice() {
         diceImg.isEnabled = true
     }
 
 
-    fun addTile(i : Int) {
+    fun addTile(i: Int) {
         val temp = TextView(requireContext())
         temp.text = "$i"
 
         val params = GridLayout.LayoutParams()
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-        params.height=(sizeTile * 3) / 4
+        params.height = (sizeTile * 3) / 4
 
         temp.gravity = Gravity.CENTER
         temp.textSize = 14f
         temp.setTypeface(temp.typeface, Typeface.BOLD)
 
-        if(((i-1) % 2) == 0)
+        if (((i - 1) % 2) == 0)
             temp.setBackgroundColor("#dbffcd".toColorInt())
         else
             temp.setBackgroundColor("#669ca4".toColorInt())
@@ -233,16 +228,17 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
         grid.addView(temp)
         val tempVar = i % 10
-        if(tempVar in 6..9 || tempVar == 0)
+        if (tempVar in 6..9 || tempVar == 0)
             tiles.add(0, temp)
         else
             tiles.add(tempVar - 1, temp)
     }
+
     fun diceRoll() {
         diceHandler((1..6).random())
     }
 
-    fun winner(playerName : String){
+    fun winner(playerName: String) {
         gameOverText.text = getString(R.string.player_wins, playerName)
         overlayGameOver.visibility = View.VISIBLE
         turn.text = getString(R.string.game_over)
@@ -264,30 +260,22 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
 
 
-    suspend fun applyMove(diceVal : Int) {
+    suspend fun applyMove(diceVal: Int) {
 
         updateDiceImg(diceVal)
 
-        if(player1Turn == 1) {
+        if (player1Turn == 1) {
             player1Turn = 2
             val start = player1Pos - 1
             player1Pos += diceVal
-            if(sessionViewModel.connectionType == "online")
-                gameConnection.sendMove(GameMove("Player 1", diceVal))
+            gameConnection.sendMove(GameMove(player1Name, diceVal))
 
             mainAnimation(start, if (player1Pos <= 50) (player1Pos - 1) else 49) {
                 setColor(if ((player1Pos - 1) < 50) (player1Pos - 1) else 49)
             }
 
-            if(player1Pos >= winningPoints) {
-                animationLaunch.join()
-                changePosition(player1Icon, start, winningPoints - 1)
-                resetTiles()
-                tiles[49].setBackgroundColor(Color.BLUE)
-                winner(player1Name)
-                return
-            }
-            if(snakes.containsKey(player1Pos)) {
+
+            if (snakes.containsKey(player1Pos)) {
                 animationLaunch.join()
                 val temp = player1Pos - 1
                 player1Pos = snakes.getValue(player1Pos)
@@ -295,26 +283,33 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     setColor(player1Pos - 1)
                 }
             }
-            if(ladders.containsKey(player1Pos)){
+            if (ladders.containsKey(player1Pos)) {
                 animationLaunch.join()
                 val temp = player1Pos - 1
                 player1Pos = ladders.getValue(player1Pos)
-                stairAnimation(temp, player1Pos - 1){
+                stairAnimation(temp, player1Pos - 1) {
                     setColor(player1Pos - 1)
                 }
 
             }
-            animationLaunch.join()
             player1.text = getString(R.string.player_1_dynamic, player1Name, player1Pos)
+            if (player1Pos >= winningPoints) {
+                animationLaunch.join()
+                changePosition(player1Icon, start, winningPoints - 1)
+                resetTiles()
+                tiles[49].setBackgroundColor(Color.BLUE)
+                winner(player1Name)
+                return
+            }
+            animationLaunch.join()
             changePosition(player1Icon, start, player1Pos - 1)
-            if (sessionViewModel.connectionType == "bot"){
+            if (sessionViewModel.connectionType == "bot") {
                 lifecycleScope.launch {
                     delay(1000)
                     diceRoll()
                 }
             }
-        }
-        else{
+        } else {
             player1Turn = 1
             val start = player2Pos - 1
             player2Pos += diceVal
@@ -323,16 +318,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 setColor(if (player2Pos <= 50) (player2Pos - 1) else 49)
             }
 
-            if(player2Pos >= winningPoints) {
-                animationLaunch.join()
-                changePosition(player2Icon, start, winningPoints - 1)
-                resetTiles()
-                tiles[49].setBackgroundColor(Color.RED)
-                winner(player2Name)
-                return
-            }
-
-            if(snakes.containsKey(player2Pos)) {
+            if (snakes.containsKey(player2Pos)) {
                 animationLaunch.join()
                 val temp = player2Pos - 1
                 player2Pos = snakes.getValue(player2Pos)
@@ -341,31 +327,39 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 }
 
             }
-            if(ladders.containsKey(player2Pos)){
+            if (ladders.containsKey(player2Pos)) {
                 animationLaunch.join()
                 val temp = player2Pos - 1
                 player2Pos = ladders.getValue(player2Pos)
-                stairAnimation(temp, player2Pos - 1){
+                stairAnimation(temp, player2Pos - 1) {
                     setColor(player2Pos - 1)
                 }
 
             }
-            animationLaunch.join()
             player2.text = getString(R.string.player_2_dynamic, player2Name, player2Pos)
+            if (player2Pos >= winningPoints) {
+                animationLaunch.join()
+                changePosition(player2Icon, start, winningPoints - 1)
+                resetTiles()
+                tiles[49].setBackgroundColor(Color.RED)
+                winner(player2Name)
+                return
+            }
+            animationLaunch.join()
             changePosition(player2Icon, start, player2Pos - 1)
             enableDice()
         }
-        if(sessionViewModel.connectionType == "pvp"){
+        if (sessionViewModel.connectionType == "pvp") {
             enableDice()
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
     }
 
-    fun resetGame(midGameReset : Boolean = false) {
+    fun resetGame(midGameReset: Boolean = false) {
         if (midGameReset)
             winner(player2Name)
         fireworks.stop()
-        if(overlayGameOver.isVisible) {
+        if (overlayGameOver.isVisible) {
             overlayGameOver.visibility = View.GONE
         }
         player1Pos = 0
@@ -381,15 +375,18 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         changePosition(player1Icon, player1Pos - 1, 0)
         resetTiles()
     }
+
     fun resetGameCheck() {
-        if(gameEnd()) {
+        if (gameEnd()) {
             resetGame(false)
-        }
-        else if(player1Pos == 0 && player2Pos == 0){
-            Toast.makeText(requireContext(), "Game is already at starting point.", Toast.LENGTH_LONG ).show()
-        }
-        else{
-            if(sessionViewModel.connectionType == "pvp" || sessionViewModel.connectionType == "bot")
+        } else if (player1Pos == 0 && player2Pos == 0) {
+            Toast.makeText(
+                requireContext(),
+                "Game is already at starting point.",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            if (sessionViewModel.connectionType == "pvp" || sessionViewModel.connectionType == "bot")
                 showResetConfirmation()
             else
                 showResetConfirmationOnline()
@@ -400,41 +397,44 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset Game?")
             .setMessage("Current game in progress. Are you sure you want to reset?")
-            .setPositiveButton("Reset", {_, _ -> resetGame(false)})
+            .setPositiveButton("Reset", { _, _ -> resetGame(false) })
             .setNegativeButton("Nope", null)
             .setCancelable(true)
             .show()
     }
+
     fun showResetConfirmationOnline() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset Game?")
             .setMessage("Current game is in progress. Do you want to forfeit?")
-            .setPositiveButton("Reset", {_, _, -> sendForfeitSignal()})
+            .setPositiveButton("Reset", { _, _, -> sendForfeitSignal() })
             .setNegativeButton("Nope", null)
             .setCancelable(true)
             .show()
     }
-    fun sendForfeitSignal(){
-        gameConnection.sendMove(GameMove("", -1))
-        resetGame(true)
+
+    fun sendForfeitSignal() {
+        gameConnection.sendMove(GameMove(player1Name, -1))
+        winner(player2Name)
     }
 
 
-
-    fun animation1(pos : Int) {
+    fun animation1(pos: Int) {
         resetTiles()
-        if(pos > -1)
+        if (pos > -1)
             tiles[pos].setBackgroundColor(Color.YELLOW)
     }
-    fun animation2(pos : Int) {
+
+    fun animation2(pos: Int) {
         resetTiles()
-        if(pos > -1)
+        if (pos > -1)
             tiles[pos].setBackgroundColor(Color.GREEN)
     }
-    fun mainAnimation(start : Int, end : Int, func : () -> Unit) {
+
+    fun mainAnimation(start: Int, end: Int, func: () -> Unit) {
 
         animationLaunch = lifecycleScope.launch {
-            for(pos in start..end) {
+            for (pos in start..end) {
                 animation1(pos)
                 delay(100)
             }
@@ -443,10 +443,10 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
     }
 
-    fun stairAnimation(start : Int, end : Int, func : () -> Unit) {
+    fun stairAnimation(start: Int, end: Int, func: () -> Unit) {
 
         animationLaunch = lifecycleScope.launch {
-            for(pos in start..end) {
+            for (pos in start..end) {
                 animation2(pos)
                 delay(100)
             }
@@ -455,12 +455,13 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
     }
 
-    fun gameEnd() : Boolean {
+    fun gameEnd(): Boolean {
         return (player1Pos >= 50 || player2Pos >= 50)
     }
-    fun reverseAnimation(start : Int, end : Int, func : () -> Unit) : Job{
+
+    fun reverseAnimation(start: Int, end: Int, func: () -> Unit): Job {
         return lifecycleScope.launch {
-            for(pos in start downTo end) {
+            for (pos in start downTo end) {
                 resetTiles()
                 tiles[pos].setBackgroundColor(Color.RED)
                 delay(100)
@@ -469,8 +470,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             func()
         }
     }
-    fun setColor(i : Int) {
-        if((i % 2) == 0)
+
+    fun setColor(i: Int) {
+        if ((i % 2) == 0)
             tiles[i].setBackgroundColor("#dbffcd".toColorInt())
         else
             tiles[i].setBackgroundColor("#669ca4".toColorInt())
@@ -481,29 +483,32 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             setColor(index)
         }
     }
-    fun changePosition(player : ImageView, start : Int, end : Int) {
+
+    fun changePosition(player: ImageView, start: Int, end: Int) {
         val rowCheck = end / 5
         val p = player.layoutParams as ConstraintLayout.LayoutParams
         val bottom = heightTile * rowCheck
         var left = 0
-        if((rowCheck % 2) == 0) {
+        if ((rowCheck % 2) == 0) {
             left = (end % 5) * tiles[0].width
-        }
-        else{
+        } else {
             left = abs((end % 5) - 4) * tiles[0].width
         }
         p.setMargins(left, p.topMargin, p.rightMargin, bottom)
         player.layoutParams = p
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        if (isRemoving)
+        if (isRemoving) {
+            gameConnection.sendMove(GameMove(player1Name, 0))
             gameConnection.disconnect()
+        }
     }
-    fun getCurrentName() : String{
+
+    fun getCurrentName(): String {
         val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         return prefs.getString("username", "Player")!!
     }
-
 
 }

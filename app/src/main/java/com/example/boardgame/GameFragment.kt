@@ -23,6 +23,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import kotlinx.coroutines.Job
 
@@ -104,15 +105,26 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
         player2Name = prefs?.getString("username2", "Player")!!
-        player1Turn = if (isHost) 1 else 2
+        val defaultTurn = if (isHost) 1 else 2
+        player1Turn = savedInstanceState?.getInt("player1Turn") ?: defaultTurn
+
+        resetGameOver.setOnClickListener {
+            gameConnection.sendMove(GameMove(player1Name, -2))
+            resetGame(false)
+        }
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
                 if (move.diceVal == -1)
                     winner(player1Name)
                 else if (move.diceVal == -2)
                     resetGame(false)
-                else if (move.diceVal == 0)
+                else if (move.diceVal == 0) {
+                    resetGameOver.text = "Go Back"
                     winner(player1Name)
+                    resetGameOver.setOnClickListener {
+                        findNavController().popBackStack()
+                    }
+                }
                 else
                     diceHandler(move.diceVal)
             }
@@ -162,8 +174,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         grid = view.findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
 
-        player1Turn = savedInstanceState?.getInt("player1Turn") ?: 1
-
         var i = 50
         var j = i
         while (i > 0) {
@@ -193,10 +203,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         turn.text = getString(R.string.player_turn_dynamic, player1Turn)
         resetBtn.setOnClickListener { resetGameCheck() }
-        resetGameOver.setOnClickListener {
-            gameConnection.sendMove(GameMove(player1Name, -2))
-            resetGame(false)
-        }
         diceImg.setOnClickListener {
             diceRoll()
         }
@@ -501,7 +507,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     override fun onDestroyView() {
         super.onDestroyView()
         if (isRemoving) {
-            gameConnection.sendMove(GameMove(player1Name, 0))
+            gameConnection.sendMove(GameMove(player1Name, -1))
             gameConnection.disconnect()
         }
     }

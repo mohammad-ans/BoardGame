@@ -56,7 +56,10 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 }
             },
             onFailed = {showFailure("Could not reach server")},
-            onMatched = {onConnected()}
+            onMatched = {
+                sessionViewModel.isHost = true
+                onConnected()
+            }
         )
 
     }
@@ -84,6 +87,7 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
     }
     private fun onConnected() {
         sessionViewModel.connection = connection
+        sessionViewModel.connectionType = "online"
         prefs?.edit()?.putString("username2", "Opponent")?.apply()
         requireActivity().runOnUiThread {
             findNavController().navigate(R.id.online_to_game)

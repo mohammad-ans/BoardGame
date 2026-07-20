@@ -23,6 +23,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var currentRoomCode: String? = null
     private var onRoomCreated: ((String) -> Unit)? = null
     private var onMatched: ((String) -> Unit)? = null
+    private var onPlayerJoined : ((String) -> Unit)? = null
     private var onWaitingForMatch: (() -> Unit)? = null
     private var onOpponentsDisconnected: (() -> Unit)? = null
     private var onError: ((String) -> Unit)? = null
@@ -86,6 +87,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 currentRoomCode = json.getString("room_code")
                 onMatched?.invoke(currentRoomCode!!)
             }
+            "player_joined" -> {
+                onPlayerJoined?.invoke(currentRoomCode!!)
+            }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
@@ -110,7 +114,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String) -> Unit)  {
         this.onRoomCreated = onCreated
         this.onConnectionFailed = onFailed
-        this.onMatched = onMatched
+        this.onPlayerJoined = onMatched
         ensureConnected {
             send( JSONObject().put("type", "create_room"))
         }

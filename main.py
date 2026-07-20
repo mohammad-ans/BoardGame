@@ -33,6 +33,7 @@ class ConnectionManager:
         return room_code
 
     async def join_room(self, user : str, room_code : str):
+        room_code = room_code.strip().upper()
         if room_code not in self.room_players:
             return -1
         players = self.room_players[room_code]
@@ -40,10 +41,7 @@ class ConnectionManager:
             return -2
         self.room_players[room_code] = (players[0], user)
         self.player_room[user] = room_code
-        if players[0] in self.list_conn:
-            await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
-        else:
-            return -3
+        await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
         return 0
     
     def random_util(self, user1 : str, user2 : str, room_code : str):
@@ -57,25 +55,26 @@ class ConnectionManager:
             if user in self.random_waiting:
                 self.random_waiting.discard(user)
             if not room_code:
-                if user in self.player_room:
+                if user in self.player_room.keys():
                     room_code = self.player_room[user]
                 else:
                     return
 
             players = self.room_players[room_code]
-            if players[0] == user and players[1]:
-                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -1})
-            elif players[0]:
-                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -1})
-
+            if players[0] == user and players[1] and players[1] in self.list_conn.keys():
+                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
+            elif players[0] and players[0] in self.list_conn.keys():
+                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
+            if players[0] in self.player_room:
+                self.player_room.pop(players[0], "")
+            if players[1] in self.player_room:
+                self.player_room.pop(players[1], "")
             self.room_players.pop(room_code)
-            self.player_room.pop(players[0], "")
-            self.player_room.pop(players[1], "")
             self.rooms.discard(room_code)
             return 0
         
         except:
-            raise
+            pass
 
     def create_room(self):
         chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -130,7 +129,6 @@ async def main_websoc(user : WebSocket):
                             await user.send_json({"type" : "join_room", "status" : "Invalid room code"})
                         elif status == -2:
                             await user.send_json({"type" : "join_room", "status" : "Room is full"})
-
                     case "find_random_match":
                         status = await manager.random_join(username)
                         if isinstance(status, int):

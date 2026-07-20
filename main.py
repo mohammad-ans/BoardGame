@@ -32,7 +32,7 @@ class ConnectionManager:
         self.player_room[user] = room_code
         return room_code
 
-    def join_room(self, user : str, room_code : str):
+    async def join_room(self, user : str, room_code : str):
         if room_code not in self.room_players:
             return -1
         players = self.room_players[room_code]
@@ -40,6 +40,10 @@ class ConnectionManager:
             return -2
         self.room_players[room_code] = (players[0], user)
         self.player_room[user] = room_code
+        if players[0] in self.list_conn:
+            await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
+        else:
+            return -3
         return 0
     
     def random_util(self, user1 : str, user2 : str, room_code : str):
@@ -60,9 +64,9 @@ class ConnectionManager:
 
             players = self.room_players[room_code]
             if players[0] == user and players[1]:
-                await self.list_conn[players[1]].send_json({"leave": "User left"})
+                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -1})
             elif players[0]:
-                await self.list_conn[players[0]].send_json({"leave": "User left"})
+                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -1})
 
             self.room_players.pop(room_code)
             self.player_room.pop(players[0], "")
@@ -92,11 +96,12 @@ class ConnectionManager:
 
     async def random_join(self, user : str):
         if len(self.random_waiting) > 0:
+            turn = random.randint(0, 1)
             room_code = self.create_room()
             player = self.random_waiting.pop()
             self.random_util(user, player, room_code)
-            await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code})
-            return 0, room_code
+            await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : turn})
+            return turn, room_code
         else:
             self.random_waiting.add(user)
             return -1
@@ -117,31 +122,32 @@ async def main_websoc(user : WebSocket):
                         await user.send_json({"type" : "room_created", "room_code" : room_code, "status" : "success"})
 
                     case "join_room":
-                        status = manager.join_room(username, data["room_code"])
+                        status = await manager.join_room(username, data["room_code"])
                         if status == 0:
                             await user.send_json({"type" : "join_room", "status" : "success"})
-                        elif status == -1:
+                            print(status)
+                        if status == -1:
                             await user.send_json({"type" : "join_room", "status" : "Invalid room code"})
                         elif status == -2:
                             await user.send_json({"type" : "join_room", "status" : "Room is full"})
 
                     case "find_random_match":
                         status = await manager.random_join(username)
-                        if status == -1:
+                        if isinstance(status, int):
                             await user.send_json({"type" : "waiting_for_match", "status" : "Waiting for other players"})
                         else:
-                            await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1]})
+                            await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0]})
 
                     case "move":
                         room_code = data["room_code"]
-                        move = data["move"]
+                        move = data["dice_val"]
                         await manager.send_data(room_code, username, move)
 
                     case "leave":
                         room_code = data["room_code"]
                         await manager.remove_connection(username, room_code)
                         break
-                    
+                
     except Exception as e:
         print(e)
         await manager.remove_connection(username, None)

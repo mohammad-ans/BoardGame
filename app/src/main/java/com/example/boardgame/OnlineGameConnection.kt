@@ -41,7 +41,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         val request = Request.Builder().url("ws://10.0.2.2:8000/ws").build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                Log.e("B", "Alraedy")
                 super.onOpen(webSocket, response)
                 send(JSONObject().put("username", username))
                 onOpen()
@@ -89,8 +88,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
             "join_room" -> {
                 val status = json.getString("status")
-                if (status == "success")
+                if (status == "success") {
+                    Log.e("C", "$currentRoomCode")
                     onMatched?.invoke(currentRoomCode!!)
+
+                }
                 else
                     onError?.invoke(json.getString("status"))
             }
@@ -114,10 +116,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         }
     }
     fun joinRoom(roomCode : String, onJoined: (String) -> Unit, onFailed: (String) -> Unit) {
+        currentRoomCode = roomCode
         this.onMatched = onJoined
         this.onError = onFailed
         this.onConnectionFailed = { onError?.invoke("Could not reach server") }
-        ensureConnected { send(JSONObject().put("type", "join_room").put("roomCode", roomCode)) }
+        ensureConnected { send(JSONObject().put("type", "join_room").put("room_code", roomCode)) }
     }
     fun findRandomMatch(onWaiting: () -> Unit, onMatched: (String) -> Unit, onFailed: () -> Unit) {
         this.onWaitingForMatch = onWaiting

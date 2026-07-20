@@ -18,11 +18,13 @@ class ConnectionManager:
         self.random_waiting: set[str] = set()
         self.room_players: dict[str, tuple] = dict()
         self.player_room: dict[str, str] = dict()
-
+        self.player_local: dict[str, str] = dict()
     async def add_connection(self, conn : WebSocket):
         await conn.accept()
         message = await conn.receive_json()
         user = message["username"]
+        local_username = message["local"]
+        self.player_local[user] = local_username
         self.list_conn[user] = conn
         return user
 
@@ -41,8 +43,11 @@ class ConnectionManager:
             return -2
         self.room_players[room_code] = (players[0], user)
         self.player_room[user] = room_code
+
+        local_name = self.player_local[user]
+        await self.list_conn[players[0]].send_json({"type" : "username", "username": local_name})
         await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
-        return 0
+        return 0, self.player_local[players[0]]
     
     def random_util(self, user1 : str, user2 : str, room_code : str):
         self.room_players[room_code] = (user1, user2)
@@ -99,8 +104,10 @@ class ConnectionManager:
             room_code = self.create_room()
             player = self.random_waiting.pop()
             self.random_util(user, player, room_code)
+            local_name = self.player_local[user]
+            await self.list_conn[player].send_json({"type" : "username", "username": local_name})
             await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : turn})
-            return turn, room_code
+            return turn, room_code, self.player_local[player]
         else:
             self.random_waiting.add(user)
             return -1
@@ -122,9 +129,10 @@ async def main_websoc(user : WebSocket):
 
                     case "join_room":
                         status = await manager.join_room(username, data["room_code"])
-                        if status == 0:
+                        if isinstance(status, tuple) and status[0] == 0:
+                            local_name = status[1]
+                            await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "join_room", "status" : "success"})
-                            print(status)
                         if status == -1:
                             await user.send_json({"type" : "join_room", "status" : "Invalid room code"})
                         elif status == -2:
@@ -132,9 +140,12 @@ async def main_websoc(user : WebSocket):
                     case "find_random_match":
                         status = await manager.random_join(username)
                         if isinstance(status, int):
+                            local_name = status[2]
+                            await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "waiting_for_match", "status" : "Waiting for other players"})
                         else:
                             await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0]})
+                            
 
                     case "move":
                         room_code = data["room_code"]

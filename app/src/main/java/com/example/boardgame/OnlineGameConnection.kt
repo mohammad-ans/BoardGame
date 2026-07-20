@@ -109,6 +109,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     private fun send(json : JSONObject) {
+        Log.e("Move", "Sending move")
         webSocket?.send(json.toString())
     }
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String) -> Unit)  {
@@ -139,7 +140,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     override fun sendMove(move: GameMove) {
-        send(JSONObject().put("type", "move").put("diceVal", move.diceVal))
+        send(JSONObject().put("type", "move").put("dice_val", move.diceVal).put("room_code", currentRoomCode!!))
     }
 
     override fun disconnect() {

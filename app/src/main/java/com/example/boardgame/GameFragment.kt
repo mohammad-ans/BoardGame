@@ -104,7 +104,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
         player2Name = prefs?.getString("username2", "Player")!!
-        player1Turn = if (isHost) 1 else 2
+        val defaultTurn = if (isHost) 1 else 2
+        player1Turn = savedInstanceState?.getInt("player1Turn") ?: defaultTurn
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
                 if (move.diceVal == -1)
@@ -161,8 +162,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         resetGameOver = view.findViewById<Button>(R.id.reset_game_overlay)
         grid = view.findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
-
-        player1Turn = savedInstanceState?.getInt("player1Turn") ?: 1
 
         var i = 50
         var j = i

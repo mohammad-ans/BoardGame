@@ -72,7 +72,9 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         setBusy("Joining Room $code...")
         connection.joinRoom(
             roomCode = code,
-            onJoined = {onConnected()},
+            onJoined = {
+                sessionViewModel.isHost = false
+                onConnected()},
             onFailed = {message -> showFailure(message)}
         )
     }

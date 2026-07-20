@@ -2,6 +2,7 @@ package com.example.boardgame
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -28,6 +29,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var onOpponentsDisconnected: (() -> Unit)? = null
     private var onError: ((String) -> Unit)? = null
     private var onConnectionFailed : (() -> Unit)? = null
+    private val prefs = context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
     @OptIn(ExperimentalUuidApi::class)
     private val username = Uuid.random().toString()
     override fun onMoveReceived(callback: (GameMove) -> Unit) {
@@ -43,11 +45,10 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                send(JSONObject().put("username", username))
+                send(JSONObject().put("username", username).put("local", playerName))
                 onOpen()
             }
             override fun onMessage(webSocket: WebSocket, text: String) {
-                val json = JSONObject(text)
                 handleServerMessage(text)
             }
 
@@ -103,6 +104,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             "move" -> {
                 moveCallback?.invoke(GameMove(playerId = "Player", diceVal = json.getInt("diceVal")))
             }
+            "username" -> prefs.edit().putString("username2", json.getString("username"))
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
         }
@@ -144,7 +146,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     override fun disconnect() {
-        send(JSONObject().put("type", "leave"))
+        send(JSONObject().put("type", "leave").put("room_code", currentRoomCode))
         webSocket?.close(1000, "Player left")
         webSocket = null
         currentRoomCode = null

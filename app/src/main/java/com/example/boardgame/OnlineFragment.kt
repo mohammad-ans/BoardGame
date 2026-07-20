@@ -16,7 +16,7 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var connection: OnlineGameConnection
 
-    private val serverUrl = ""
+    private val serverUrl = "ws://localhost:8000"
     private lateinit var status: TextView
     private lateinit var progress: ProgressBar
     private lateinit var codeArea: EditText
@@ -34,9 +34,9 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         joinRoom = view.findViewById<Button>(R.id.join_friendly_room)
         randomMatch = view.findViewById<Button>(R.id.randomMatchBtn)
         createRoom = view.findViewById<Button>(R.id.create_room)
-        connection = OnlineGameConnection(requireContext(), "ws://localhost:8000", serverUrl)
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-
+        val username = prefs?.getString("username", "Player 2")
+        connection = OnlineGameConnection(requireContext(), username!!, serverUrl)
 
         joinRoom.setOnClickListener { onJoinLis() }
         createRoom.setOnClickListener { onCreateRoomLis() }

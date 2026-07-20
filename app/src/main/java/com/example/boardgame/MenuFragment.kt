@@ -14,12 +14,14 @@ class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var usernameInput: EditText
     private lateinit var usernameConfirm : Button
     private lateinit var usernameOverlay : ConstraintLayout
+    private lateinit var profileButton : Button
     var prefs : SharedPreferences? = null
 
     override fun onViewCreated(view : View, savedInstanceState : Bundle?) {
         usernameInput = view.findViewById<EditText>(R.id.username_input)
         usernameConfirm = view.findViewById<Button>(R.id.username_input_confirm)
         usernameOverlay = view.findViewById<ConstraintLayout>(R.id.username_input_overlay)
+        profileButton = view.findViewById<Button>(R.id.profile_menu_icon)
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         val username = getUsername()
         if(username == null){
@@ -38,6 +40,9 @@ class MenuFragment : Fragment(R.layout.menu) {
         }
         view.findViewById<Button>(R.id.nearby_mode).setOnClickListener {
             findNavController().navigate(R.id.mode_to_friendly_loading)
+        }
+        profileButton.setOnClickListener {
+            findNavController().navigate(R.id.mode_to_profile)
         }
     }
     private fun getUsername() : String?{

@@ -35,8 +35,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var webSocket : WebSocket? = null
     private var currentRoomCode: String? = null
     private var onRoomCreated: ((String) -> Unit)? = null
-    private var onMatched: ((String) -> Unit)? = null
-    private var onPlayerJoined : ((String) -> Unit)? = null
+    private var onMatched: ((String, Boolean) -> Unit)? = null
     private var onWaitingForMatch: (() -> Unit)? = null
     private var onOpponentsDisconnected: (() -> Unit)? = null
     private var onError: ((String) -> Unit)? = null
@@ -66,7 +65,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             Log.e("A", "Alraedy")
             return
         }
-        val request = Request.Builder().url("ws://10.0.2.2:8000/ws").build()
+        val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
@@ -110,18 +109,19 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
             "waiting_for_match" -> onWaitingForMatch?.invoke()
             "matched" -> {
+                val turn = json.getInt("turn") == 1
                 currentRoomCode = json.getString("room_code")
                 isInitiator = json.getBoolean("is_initiator")
-                onMatched?.invoke(currentRoomCode!!)
+                onMatched?.invoke(currentRoomCode!!, turn)
             }
             "player_joined" -> {
-                onPlayerJoined?.invoke(currentRoomCode!!)
+                onMatched?.invoke(currentRoomCode!!, true)
                 isInitiator = json.getBoolean("is_initiator")
             }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
-                    onMatched?.invoke(currentRoomCode!!)
+                    onMatched?.invoke(currentRoomCode!!, false)
                     isInitiator = json.getBoolean("is_initiator")
                 }
                 else
@@ -230,22 +230,22 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         Log.e("Move", "Sending move")
         webSocket?.send(json.toString())
     }
-    fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String) -> Unit)  {
+    fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String, Boolean) -> Unit)  {
         this.onRoomCreated = onCreated
         this.onConnectionFailed = onFailed
-        this.onPlayerJoined = onMatched
+        this.onMatched = onMatched
         ensureConnected {
             send( JSONObject().put("type", "create_room"))
         }
     }
-    fun joinRoom(roomCode : String, onJoined: (String) -> Unit, onFailed: (String) -> Unit) {
+    fun joinRoom(roomCode : String, onJoined: (String, Boolean) -> Unit, onFailed: (String) -> Unit) {
         currentRoomCode = roomCode
         this.onMatched = onJoined
         this.onError = onFailed
         this.onConnectionFailed = { onError?.invoke("Could not reach server") }
         ensureConnected { send(JSONObject().put("type", "join_room").put("room_code", roomCode)) }
     }
-    fun findRandomMatch(onWaiting: () -> Unit, onMatched: (String) -> Unit, onFailed: () -> Unit) {
+    fun findRandomMatch(onWaiting: () -> Unit, onMatched: (String, Boolean) -> Unit, onFailed: () -> Unit) {
         this.onWaitingForMatch = onWaiting
         this.onMatched = onMatched
         this.onConnectionFailed = onFailed

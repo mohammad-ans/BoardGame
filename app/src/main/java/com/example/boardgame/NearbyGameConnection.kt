@@ -1,6 +1,14 @@
 package com.example.boardgame
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.AudioTrack
+import android.media.MediaRecorder
+import android.os.ParcelFileDescriptor
+import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -31,12 +39,112 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
     private var onOpponentConnected: (() -> Unit)? = null
     private var onOpponentDisconnected: (() -> Unit)? = null
     private var onJoinRejected: (() -> Unit)? = null
+    private val sampleRate = 16000
+    private val channelConfigIn = AudioFormat.CHANNEL_IN_MONO
+    private val channelConfigOut = AudioFormat.CHANNEL_OUT_MONO
+    private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+    private val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfigIn, audioFormat)
+    private var audioRecord: AudioRecord? = null
+    private var audioTrack: AudioTrack? = null
+    private var captureThread: Thread? = null
+    private var isCapturing: Boolean = false
+    private var isMuted: Boolean = true
+    private var pipeWriteSide: ParcelFileDescriptor? = null
+
+    @SuppressLint("MissingPermission")
+    override fun startVoiceChat() {
+        val endpointId = connectedEndPointId ?: return
+        if (isCapturing)
+            return
+        val pipe = ParcelFileDescriptor.createPipe()
+        val readSide = pipe[0]
+        pipeWriteSide = pipe[1]
+        val payload = Payload.fromStream(ParcelFileDescriptor.AutoCloseInputStream(readSide))
+        connectionsClient.sendPayload(endpointId, payload)
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+            sampleRate, channelConfigIn, audioFormat, minBufferSize
+        )
+        isCapturing = true
+        audioRecord?.startRecording()
+        captureThread = Thread {
+            val buffer = ByteArray(minBufferSize)
+            val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(pipeWriteSide)
+            try{
+                while(isCapturing) {
+                    val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (bytesRead > 0 && !isMuted) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                }
+            }
+            catch(e : Exception) {
+                Log.e("NearbyVoice", "Capture Error: ${e.message}", e)
+            }
+            finally {
+                outputStream.close()
+            }
+        }
+        captureThread?.start()
+    }
+
+    override fun setMuted(muted: Boolean) {
+        isMuted = muted
+    }
+    override fun stopVoiceChat() {
+        isCapturing = false
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
+        captureThread = null
+        audioTrack?.stop()
+        audioTrack?.release()
+        audioTrack = null
+    }
+
+    private fun handleIncomingVoiceStream(payload: Payload) {
+        val inputStream = payload.asStream()?.asInputStream() ?: return
+
+        val minTrackBuffer = AudioTrack.getMinBufferSize(sampleRate, channelConfigOut, audioFormat)
+
+        audioTrack = AudioTrack.Builder().setAudioAttributes(
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(
+                AudioAttributes.CONTENT_TYPE_SPEECH).build()
+        ).setAudioFormat(AudioFormat.Builder().setSampleRate(sampleRate).setEncoding(audioFormat).setChannelMask(channelConfigOut).build())
+            .setBufferSizeInBytes(minTrackBuffer).setTransferMode(AudioTrack.MODE_STREAM).build()
+
+        audioTrack?.play()
+
+        Thread {
+            val buffer = ByteArray(minTrackBuffer)
+
+            try {
+                while (true) {
+                    val bytesRead = inputStream.read(buffer)
+                    if (bytesRead == -1)
+                        break
+                    audioTrack?.write(buffer, 0, bytesRead)
+                }
+            }
+            catch(e : Exception) {
+                Log.e("NearbyVoice", "PlayBack Error ${e.message}", e)
+            }
+        }.start()
+    }
     private val payloadCallback = object :  PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
-            if(payload.type == Payload.Type.BYTES) {
-                val json = String(payload.asBytes()!!, Charsets.UTF_8)
-                val move = Json.decodeFromString<GameMove>(json)
-                moveCallback?.invoke(move)
+            when(payload.type){
+                Payload.Type.BYTES -> {
+                    val json = String(payload.asBytes()!!, Charsets.UTF_8)
+                    val move = Json.decodeFromString<GameMove>(json)
+                    moveCallback?.invoke(move)
+                }
+                Payload.Type.STREAM -> {
+                    handleIncomingVoiceStream(payload)
+                }
+                else -> {
+                    Log.e("Nearby Unknown Stream", "Type: ${payload.type} $payload")
+                }
             }
         }
 
@@ -82,7 +190,7 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
         connectionsClient.startAdvertising(
             localPlayerName, serviceID, connectionLifecycleCallback, options
         ).addOnSuccessListener {
-            Toast.makeText(context, "Advertising was successfull", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Advertising was successful", Toast.LENGTH_LONG).show()
         }
             .addOnFailureListener { e ->
                 Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
@@ -114,7 +222,7 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
         val options = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
         connectionsClient.startDiscovery(serviceID, discoveryCallback, options)
             .addOnSuccessListener {
-            Toast.makeText(context, "Discovery was successfull", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Discovery was successful", Toast.LENGTH_LONG).show()
         }
             .addOnFailureListener { e ->
                 Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()

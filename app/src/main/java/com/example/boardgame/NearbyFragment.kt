@@ -20,17 +20,11 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.registerForActivityResult
-import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import androidx.core.location.LocationManagerCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
@@ -39,7 +33,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         android.Manifest.permission.BLUETOOTH_SCAN,
         android.Manifest.permission.BLUETOOTH_CONNECT,
         android.Manifest.permission.ACCESS_FINE_LOCATION,
-        android.Manifest.permission.NEARBY_WIFI_DEVICES
+        android.Manifest.permission.NEARBY_WIFI_DEVICES,
+        android.Manifest.permission.RECORD_AUDIO
     )
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var connection: NearbyGameConnection
@@ -142,7 +137,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 .setTitle("Location Required")
                 .setMessage("Nearby play needs location service ON")
                 .setCancelable(false)
-                .setPositiveButton("Open Settings"){_,_, ->
+                .setPositiveButton("Open Settings"){_,_ ->
                     startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
                 .setNegativeButton("Cancel", null)
@@ -231,7 +226,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 }
                 startActivity(intent)
                 check = 1
-            }.setNegativeButton("Cancel"){_,_, ->
+            }.setNegativeButton("Cancel"){_,_ ->
                 goBack("No way to play without permissions")
             }.show()
     }

@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.play.services.nearby)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.squareup.okhttps)
+    implementation(libs.github.webrtc)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     testImplementation(libs.junit)

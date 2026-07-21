@@ -116,13 +116,13 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
             "player_joined" -> {
                 onPlayerJoined?.invoke(currentRoomCode!!)
+                isInitiator = json.getBoolean("is_initiator")
             }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
-                    Log.e("C", "$currentRoomCode")
                     onMatched?.invoke(currentRoomCode!!)
-
+                    isInitiator = json.getBoolean("is_initiator")
                 }
                 else
                     onError?.invoke(json.getString("status"))

@@ -47,7 +47,7 @@ class ConnectionManager:
         local_name = self.player_local[user]
         await self.list_conn[players[0]].send_json({"type" : "username", "username": local_name})
         await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
-        return 0, self.player_local[players[0]]
+        return 0, self.player_local[players[0]], room_code
     
     def random_util(self, user1 : str, user2 : str, room_code : str):
         self.room_players[room_code] = (user1, user2)
@@ -111,6 +111,14 @@ class ConnectionManager:
         else:
             self.random_waiting.add(user)
             return -1
+
+    async def relay_to_opponent(self, room_code : str, sender : str, payload: dict):
+        players = self.room_players.get(room_code)
+        if not players:
+            return
+        opponent = players[1] if players[0] == sender else players[0]
+        if opponent and opponent in self.list_conn:
+            await self.list_conn[opponent].send_json(payload)
             
 manager =  ConnectionManager()
 
@@ -131,8 +139,10 @@ async def main_websoc(user : WebSocket):
                         status = await manager.join_room(username, data["room_code"])
                         if isinstance(status, tuple) and status[0] == 0:
                             local_name = status[1]
+                            room_code = status[2]
                             await user.send_json({"type" : "username", "username": local_name})
-                            await user.send_json({"type" : "join_room", "status" : "success"})
+                            await user.send_json({"type" : "join_room", "status" : "success", "is_initiator" : False})
+                            await manager.relay_to_opponent(room_code, username, {"type" : "matched", "room_code" : room_code, "is_initiator" : True})
                         if status == -1:
                             await user.send_json({"type" : "join_room", "status" : "Invalid room code"})
                         elif status == -2:
@@ -140,12 +150,17 @@ async def main_websoc(user : WebSocket):
                     case "find_random_match":
                         status = await manager.random_join(username)
                         if isinstance(status, int):
-                            local_name = status[2]
-                            await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "waiting_for_match", "status" : "Waiting for other players"})
                         else:
-                            await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0]})
+                            local_name = status[2]
+                            await user.send_json({"type" : "username", "username": local_name})
+                            await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0], "is_initiator" : False})
+                            await manager.relay_to_opponent(room_code, username, {"type" : "matched", "room_code" : room_code, "is_initiator" : True})
                             
+                    case "voice_offer" | "voice_answer" | "voice_ice_candidate":
+                        room_code = data["room_code"]
+                        if room_code:
+                            await manager.relay_to_opponent(room_code, username, data)
 
                     case "move":
                         room_code = data["room_code"]

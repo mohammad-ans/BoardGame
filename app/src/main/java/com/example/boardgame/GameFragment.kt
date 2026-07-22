@@ -51,7 +51,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     var heightTile: Int = 0
 
     lateinit var animationLaunch: Job
-    lateinit var reverseAnimationLaunch: Job
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
@@ -110,6 +109,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.setMuted(isMuted)
             mute_button.text = if (isMuted) "U" else "M"
         }
+        resetGameOver = view.findViewById<Button>(R.id.reset_game_overlay)
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
         player2Name = prefs?.getString("username2", "Player")!!
@@ -178,7 +178,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player1Icon = view.findViewById<ImageView>(R.id.player1icon)
         player2Icon = view.findViewById<ImageView>(R.id.player2icon)
         resetBtn = view.findViewById<Button>(R.id.reset_game)
-        resetGameOver = view.findViewById<Button>(R.id.reset_game_overlay)
         grid = view.findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
 

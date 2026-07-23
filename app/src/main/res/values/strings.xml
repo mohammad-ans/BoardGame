@@ -38,6 +38,15 @@
     <string name="host">Host</string>
     <string name="join">Join</string>
     <string name="req_declined">Request declined, select another player…</string>
-    <string name="searching_nearby">Searching for nearby players...</string>
+    <string name="searching_nearby">Searching for nearby players…</string>
     <string name="outgoing_request">Requesting to join %1$s</string>
+    <string name="friendly_match">Friendly Match</string>
+    <string name="join_room">Join Room</string>
+    <string name="host_room">Host Room</string>
+    <string name="enter">Enter Room</string>
+    <string name="room_code">Room Code: %1$s</string>
+    <string name="join_wait">Waiting for player to join…</string>
+    <string name="server_error">Could Not reach server.</string>
+    <string name="empty_code">Enter a room code first</string>
+    <string name="joining">Joining Room…</string>
 </resources>

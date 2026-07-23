@@ -107,7 +107,7 @@
                 android:id="@+id/username_input"
                 android:textColor="@color/white"
                 android:background="@drawable/username_input_hover"
-                android:paddingVertical="12dp"
+                android:paddingVertical="16dp"
                 android:paddingHorizontal="30dp"
                 android:layout_marginVertical="12dp"
                 android:maxLength="30"

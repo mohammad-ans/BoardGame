@@ -32,7 +32,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/nearby_mode"
+            android:text="@string/offline_mode"
             android:layout_marginVertical="12dp"
             android:textColor="@color/heading"
             android:textSize="26sp"
@@ -52,6 +52,7 @@
         android:layout_marginTop="32dp"
         android:textColor="@color/white"
         android:textSize="16sp"
+        android:paddingVertical="18dp"
         />
     <Button
         android:layout_width="match_parent"
@@ -64,6 +65,7 @@
         android:layout_marginTop="8dp"
         android:textColor="@color/white"
         android:textSize="16sp"
+        android:paddingVertical="18dp"
         />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

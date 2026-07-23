@@ -40,6 +40,9 @@ class MenuFragment : Fragment(R.layout.menu) {
         }
         usernameConfirm.setOnClickListener{
             val username = usernameInput.text.toString()
+            if(username.isEmpty()){
+                return@setOnClickListener
+            }
             prefs?.edit()?.putString("username", username)?.apply()
             usernameInitial.text = getString(R.string.username_initial, username[0])
             usernameValue.text = getString(R.string.username_val, username)
@@ -61,7 +64,7 @@ class MenuFragment : Fragment(R.layout.menu) {
     }
     private fun getUsername() : String{
         val username = prefs?.getString("username", null)
-        if (username == null) {
+        if (username == null || username.isEmpty()) {
             prefs?.edit()?.putString("username", "Username")
             return "Username"
         }

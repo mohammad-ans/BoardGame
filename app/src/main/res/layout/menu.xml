@@ -1,106 +1,231 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/teal_700"
+    android:background="@color/teal_950"
     android:orientation="vertical"
     android:gravity="center"
     android:elevation="1dp"
+    android:padding="40dp"
     >
-    <Button
-        android:id="@+id/offline_mode"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:text="@string/offline_mode"
-        android:background="@drawable/mode_selector_border"
-        android:textAllCaps="false"
-        android:paddingVertical="16dp"
-        android:textSize="28sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="50dp"
-        android:elevation="2dp"
-        />
-    <Button
-        android:id="@+id/nearby_mode"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:text="@string/nearby_mode"
-        android:textAllCaps="false"
-        android:paddingVertical="16dp"
-        android:textSize="28sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/offline_mode"
-        android:elevation="2dp"
-        />
-    <Button
-        android:id="@+id/online_mode"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:text="@string/online_mode"
-        android:textAllCaps="false"
-        android:paddingVertical="16dp"
-        android:textSize="28sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/nearby_mode"
-        android:elevation="2dp"
-        />
 
+    <TextView
+        android:id="@+id/game_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/game_name"
+        android:textColor="@color/heading"
+        android:textSize="35sp"
+        android:textFontWeight="900"
+        />
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/username_input_overlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/transparent_black"
-        android:elevation="4dp"
-        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/main_boxes"
+        android:padding="16dp"
+        android:id="@+id/username_box"
         >
+        <TextView
+            android:id="@+id/username_initial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/username_initial"
+            android:padding="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:textColor="@color/white"
+            android:background="@drawable/circle"
+            android:textAlignment="center"
+            />
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/heading"
+            android:text="@string/username"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/username_initial"
+            android:layout_marginLeft="8dp"
+            />
+        <TextView
+            android:id="@+id/username_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/username"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@id/username_initial"
+            app:layout_constraintTop_toBottomOf="@id/username"
+            android:layout_marginLeft="8dp"
+            />
+        <Button
+            android:id="@+id/edit_username_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/edit_option"
+            android:background="@drawable/options_hover"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:textColor="@color/white"
+            android:textAllCaps="false"
+            />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="240dp"
-            android:layout_height="240dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:id="@+id/username_input_area"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:background="@drawable/win_game_border"
+            android:background="@drawable/main_boxes"
+            android:layout_marginTop="32dp"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="24dp"
+            android:visibility="gone"
             >
-            <EditText
+            <TextView
+                android:id="@+id/edit_username_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/edit_username"
+                android:textColor="@color/heading"
+                android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginVertical="8dp"
+                />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/edit_username_text"
                 android:hint="Username"
                 android:textColorHint="@color/white"
                 android:id="@+id/username_input"
                 android:textColor="@color/white"
-                android:background="@drawable/grid_border"
+                android:background="@drawable/username_input_hover"
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="30dp"
+                android:layout_marginVertical="12dp"
                 android:maxLength="30"
                 />
-            <Button
-                android:id="@+id/username_input_confirm"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/username_input"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:text="Confirm"
-                android:background="@drawable/grid_border"
+                android:layout_marginVertical="12dp"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:baselineAligned="true"
+                >
+            <Button
+                android:id="@+id/username_input_confirm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                android:background="@drawable/options_hover"
                 android:textColor="@color/white"
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="12dp"
+                android:layout_weight="0.95"
+                android:textAllCaps="false"
                 />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.1"
+                    />
+            <Button
+                android:layout_width="0dp"
+                android:layout_weight="0.95"
+                android:layout_height="wrap_content"
+                android:id="@+id/username_cancel_btn"
+                android:background="@drawable/teal_border_button"
+                android:text="@string/cancel"
+                android:textColor="@color/heading"
+                android:textAllCaps="false"
+                />
+            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/modes_boxes"
+        app:layout_constraintTop_toBottomOf="@id/username_box"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/main_boxes"
+        android:padding="24dp"
+        >
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/mode_choice"
+        android:textColor="@color/heading"
+        android:textSize="28sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/mode_choice_text"
+        />
+        <Button
+            android:id="@+id/offline_mode"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:text="@string/offline_mode"
+            android:background="@drawable/options_hover"
+            android:textAllCaps="false"
+            android:paddingVertical="16dp"
+            android:textSize="26sp"
+            app:layout_constraintTop_toBottomOf="@id/mode_choice_text"
+            app:layout_constraintBottom_toBottomOf="@id/nearby_mode"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="50dp"
+            android:elevation="2dp"
+            android:textColor="@color/white"
+            android:layout_marginTop="10dp"
+            />
+        <Button
+            android:id="@+id/nearby_mode"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:text="@string/nearby_mode"
+            android:textAllCaps="false"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="10dp"
+            android:textSize="26sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/offline_mode"
+            android:background="@drawable/options_hover"
+            android:elevation="2dp"
+            android:textColor="@color/white"
+            />
+
+        <Button
+            android:id="@+id/online_mode"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:text="@string/online_mode"
+            android:textAllCaps="false"
+            android:layout_marginTop="10dp"
+            android:paddingVertical="16dp"
+            android:textSize="26sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/nearby_mode"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:elevation="2dp"
+            android:background="@drawable/options_hover"
+            android:textColor="@color/white"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

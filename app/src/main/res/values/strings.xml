@@ -11,11 +11,21 @@
     <string name="dice_description">A dice image</string>
     <string name="game_over">Game Over</string>
     <string name="player_wins" translatable="false">%1$s Wins</string>
-    <string name="offline_mode">Offline Mode</string>
-    <string name="offline_bot">Play with Bot</string>
+    <string name="game_name">Snake Ladder</string>
+    <string name="offline_mode">Offline</string>
+    <string name="offline_bot">Play with Robot</string>
     <string name="offline_pvp">Offline P v P</string>
-    <string name="nearby_mode">Nearby Mode</string>
-    <string name="online_mode">Online Mode</string>
-    <string name="online_player">Random Match</string>
-    <string name="online_friend">Play with Friend</string>
+    <string name="nearby_mode">Play Nearby</string>
+    <string name="online_mode">Online</string>
+    <string name="online_player">Play Random Match</string>
+    <string name="online_friend">Play with Friend(Room)</string>
+    <string name="back">Back</string>
+    <string name="mode_choice">Choose a Mode</string>
+    <string name="username">Username</string>
+    <string name="username_val">%1$s</string>
+    <string name="username_initial">%1%s</string>
+    <string name="edit_option">Edit</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit_username">Edit Username</string>
 </resources>

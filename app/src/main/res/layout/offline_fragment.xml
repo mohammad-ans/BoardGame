@@ -1,23 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/teal_950"
+        android:padding="24dp"
+        android:id="@+id/nearby_main"
+        >
 
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/game_name"
+        android:textColor="@color/heading"
+        android:textSize="35sp"
+        android:layout_marginBottom="150dp"
+        android:layout_marginTop="100dp"
+        android:textAlignment="center"
+        />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/main_boxes"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="32dp"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nearby_mode"
+            android:layout_marginVertical="12dp"
+            android:textColor="@color/heading"
+            android:textSize="26sp"
+            android:textAlignment="center"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:id="@+id/offline_mode_text"
+            />
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/offline_pvp"
-        android:text="P V P"
-        app:layout_constraintTop_toTopOf="parent"
+        android:text="@string/offline_pvp"
+        app:layout_constraintTop_toBottomOf="@id/offline_mode_text"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/options_hover"
+        android:layout_marginTop="32dp"
+        android:textColor="@color/white"
+        android:textSize="16sp"
         />
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/offline_bot"
-        android:text="Bot"
+        android:text="@string/offline_bot"
         app:layout_constraintTop_toBottomOf="@id/offline_pvp"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/options_hover"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/white"
+        android:textSize="16sp"
         />
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

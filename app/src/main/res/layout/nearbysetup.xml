@@ -1,47 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:background="@color/teal_950"
+    android:padding="24dp"
+    android:id="@+id/nearby_main"
+    >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/game_name"
+        android:textColor="@color/heading"
+        android:textSize="35sp"
+        android:layout_marginBottom="150dp"
+        android:layout_marginTop="100dp"
+        android:textAlignment="center"
+        />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_marginBottom="16dp"
+        android:background="@drawable/main_boxes"
+        android:padding="24dp"
         >
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/nearbyBtnHost"
-            android:text="Host"
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/nearby_mode"
+            android:layout_marginVertical="12dp"
+            android:textColor="@color/heading"
+            android:textSize="26sp"
+            android:textAlignment="center"
             />
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/nearbyBtnHost"
+            android:text="@string/host"
+            android:background="@drawable/options_hover"
+            android:layout_marginTop="32dp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            />
+        <Button
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/nearbyBtnJoin"
-            android:text="Join"
+            android:text="@string/join"
+            android:background="@drawable/options_hover"
+            android:layout_marginVertical="8dp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/backBtnMain"
+            android:text="@string/back"
+            android:background="@drawable/teal_border_button"
+            android:layout_marginVertical="8dp"
+            android:textColor="@color/heading"
             />
 
     </LinearLayout>
-    <TextView
-        android:id="@+id/nearbyStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:layout_marginBottom="16dp"
-        />
-    <ProgressBar
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/nearbyProgressSearching"
-        android:visibility="gone"
-        android:layout_marginBottom="16dp"
-        />
-    <ListView
-        android:id="@+id/nearbyLive"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
 </LinearLayout>
+
+
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/teal_950"
+        android:gravity="center"
+        android:padding="40dp"
+        android:id="@+id/nearby_join"
+        android:visibility="gone"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/game_name"
+            android:textColor="@color/heading"
+            android:textSize="35sp"
+            android:layout_marginBottom="48dp"
+            />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/main_boxes"
+            android:padding="16dp"
+            >
+            <TextView
+                android:id="@+id/joining_nearby_text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/nearby_players"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginVertical="12dp"
+                android:textColor="@color/heading"
+                android:textSize="26sp"
+                />
+            <TextView
+                android:id="@+id/waiting_text_join"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/searching_nearby"
+                app:layout_constraintTop_toBottomOf="@id/joining_nearby_text"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="32dp"
+                android:textColor="@color/teal_hover"
+                />
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/nearbyProgressJoin"
+                android:layout_marginBottom="16dp"
+                android:indeterminateTint="@color/heading"
+                app:layout_constraintTop_toBottomOf="@id/waiting_text_join"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                style="?android:attr/progressBarStyleLarge"
+                />
+            <ListView
+                android:id="@+id/nearbyLive"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                app:layout_constraintTop_toBottomOf="@id/waiting_text_join"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginVertical="12dp"
+                >
+
+            </ListView>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/teal_border_button"
+                android:text="@string/back"
+                android:textColor="@color/heading"
+                app:layout_constraintTop_toBottomOf="@id/nearbyLive"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginVertical="16dp"
+                android:id="@+id/backBtn"
+                />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/nearby_host"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/teal_950"
+        android:padding="40dp"
+        android:visibility="gone"
+        >
+        <TextView
+            android:id="@+id/hosting_nearby_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/hosting_nearby"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/heading"
+            android:textSize="35sp"
+            android:textAlignment="center"
+            />
+        <TextView
+            android:id="@+id/waiting_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/waiting_players"
+            android:layout_marginTop="32dp"
+            android:textColor="@color/teal_hover"
+            android:textSize="20sp"
+            android:textAlignment="center"
+            />
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/nearbyProgressSearching"
+            android:layout_marginBottom="16dp"
+            android:indeterminateTint="@color/heading"
+            android:layout_marginTop="150dp"
+            android:layout_gravity="center"
+            style="?android:attr/progressBarStyleLarge"
+            />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

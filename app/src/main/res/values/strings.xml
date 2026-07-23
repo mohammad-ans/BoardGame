@@ -28,4 +28,16 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="edit_username">Edit Username</string>
+    <string name="accept">Accept</string>
+    <string name="hosting_nearby">Hosting Nearby</string>
+    <string name="waiting_players">Waiting for incoming requests…</string>
+    <string name="nearby_players">Nearby Players</string>
+    <string name="tap_players">Tap a player to send a request:</string>
+    <string name="player">Player</string>
+    <string name="incoming_request">%1$s is requesting to join…</string>
+    <string name="host">Host</string>
+    <string name="join">Join</string>
+    <string name="req_declined">Request declined, select another player…</string>
+    <string name="searching_nearby">Searching for nearby players...</string>
+    <string name="outgoing_request">Requesting to join %1$s</string>
 </resources>

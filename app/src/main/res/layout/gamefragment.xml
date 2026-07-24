@@ -21,12 +21,15 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="5dp"
             android:paddingStart="6dp"
+            android:paddingEnd="6dp"
             >
             <Button
                 android:id="@+id/muteButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="U"
+                android:layout_width="48dp"
+                android:layout_height="64dp"
+                android:background="@drawable/ic_mic"
+                android:layout_marginTop="4dp"
+                android:contentDescription="MicButton"
                 />
             <TextView
                 android:id="@+id/player1"
@@ -488,13 +491,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/transparent_black"
+        android:padding="24dp"
         android:visibility="gone"
         >
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/win_game_border"
+            android:background="@drawable/option_boxes_hovered"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -530,7 +534,7 @@
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="8dp"
                 android:layout_gravity="center"
-                android:background="@drawable/grid_border"
+                android:background="@drawable/username_input"
                 android:layout_marginTop="20dp"
                 />
         </LinearLayout>

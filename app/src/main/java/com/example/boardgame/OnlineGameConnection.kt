@@ -56,6 +56,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private val iceServers = listOf(PeerConnection.IceServer.builder("stun:stun.l.google.com").createIceServer() )
     @OptIn(ExperimentalUuidApi::class)
     private val username = Uuid.random().toString()
+    private val pendingIceCandidates = mutableListOf<IceCandidate>()
+    private var remoteDescriptionSet = false
     override fun onMoveReceived(callback: (GameMove) -> Unit) {
         moveCallback = callback
     }
@@ -116,13 +118,15 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
             "player_joined" -> {
                 onMatched?.invoke(currentRoomCode!!, true)
-                isInitiator = json.getBoolean("is_initiator")
+//                isInitiator = json.getBoolean("is_initiator")
+                isInitiator = true
             }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
                     onMatched?.invoke(currentRoomCode!!, false)
-                    isInitiator = json.getBoolean("is_initiator")
+//                    isInitiator = json.getBoolean("is_initiator")
+                    isInitiator = false
                 }
                 else
                     onError?.invoke(json.getString("status"))
@@ -131,13 +135,24 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 moveCallback?.invoke(GameMove(playerId = "Player", diceVal = json.getInt("diceVal")))
             }
             "voice_offer" -> {
-                val sdp = SessionDescription(SessionDescription.Type.ANSWER, json.getString("sdp"))
-                peerConnection?.setRemoteDescription(SimpleSdpObserver(), sdp)
+                val sdp = SessionDescription(SessionDescription.Type.OFFER, json.getString("sdp"))
+                peerConnection?.setRemoteDescription(object : SimpleSdpObserver(){
+                    override fun onSetSuccess(){
+                        remoteDescriptionSet = true
+                        flushPendingIceCandidates()
+                        createAndSendAnswer()
+                    }
+                }, sdp)
 
             }
             "voice_answer" -> {
-                val sdp = SessionDescription(SessionDescription.Type.OFFER, json.getString("sdp"))
-                peerConnection?.setRemoteDescription(SimpleSdpObserver(), sdp)
+                val sdp = SessionDescription(SessionDescription.Type.ANSWER, json.getString("sdp"))
+                peerConnection?.setRemoteDescription(object : SimpleSdpObserver(){
+                    override fun onSetSuccess() {
+                        remoteDescriptionSet = true
+                        flushPendingIceCandidates()
+                    }
+                }, sdp)
             }
             "voice_ice_candidate" -> {
                 val candidate = IceCandidate(
@@ -145,7 +160,10 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                     json.getInt("sdpMLineIndex"),
                     json.getString("candidate")
                 )
-                peerConnection?.addIceCandidate(candidate)
+                if (remoteDescriptionSet)
+                    peerConnection?.addIceCandidate(candidate)
+                else
+                    pendingIceCandidates.add(candidate)
             }
             "username" -> prefs.edit().putString("username2", json.getString("username"))
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
@@ -214,6 +232,20 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             createAndSendOffer()
     }
     private fun createAndSendOffer(){
+        Log.e("WebRtc", "sent")
+        val constraints = MediaConstraints()
+        peerConnection?.createOffer(object : SimpleSdpObserver() {
+            override fun onCreateSuccess(sdp: SessionDescription?) {
+                peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
+                send(JSONObject().apply {
+                    put("type", "voice_offer")
+                    put("room_code", currentRoomCode)
+                    put("sdp", sdp?.description)
+                })
+            }
+        }, constraints)
+    }
+    private fun createAndSendAnswer() {
         val constraints = MediaConstraints()
         peerConnection?.createAnswer(object : SimpleSdpObserver() {
             override fun onCreateSuccess(sdp: SessionDescription?) {
@@ -301,6 +333,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         peerConnection = null
         localAudioTrack = null
         audioSource = null
+    }
+    private fun flushPendingIceCandidates() {
+//        pendingI
     }
     open class SimpleSdpObserver : SdpObserver {
         override fun onCreateSuccess(sdp: SessionDescription?) {}

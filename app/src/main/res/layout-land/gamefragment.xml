@@ -6,6 +6,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <Button
+        android:id="@+id/muteButton"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:background="@drawable/ic_mic"
+        android:layout_marginTop="4dp"
+        android:contentDescription="MicButton"
+        android:layout_gravity="end"
+        />
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -23,11 +32,15 @@
             android:layout_marginBottom="5dp"
             android:paddingStart="6dp"
             >
-            <Button
-                android:id="@+id/muteButton"
-                android:layout_height="wrap_content"
+            <TextView
+                android:id="@+id/player2"
                 android:layout_width="wrap_content"
-                android:text="U"
+                android:layout_height="wrap_content"
+                android:text="@string/player_2"
+                android:textSize="18sp"
+                android:layout_weight="0.5"
+                android:gravity="start"
+                android:textColor="@color/white"
                 />
             <TextView
                 android:id="@+id/player1"
@@ -37,16 +50,8 @@
                 android:textSize="18sp"
                 android:layout_weight="0.5"
                 android:textColor="@color/white"
-                />
-            <TextView
-                android:id="@+id/player2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/player_2"
-                android:textSize="18sp"
-                android:layout_weight="0.5"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:layout_marginRight="55dp"
                 />
         </LinearLayout>
 

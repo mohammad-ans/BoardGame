@@ -83,6 +83,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         outState.putInt("player1Turn", player1Turn)
         outState.putInt("diceVal", diceVal)
         outState.putBoolean("fireworks_running", fireworks.isRunning())
+        outState.putBoolean("isMuted", isMuted)
     }
 
     fun updateDiceImg(diceVal: Int) {
@@ -104,6 +105,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             ?: throw IllegalStateException("Game Fragment reached with no active connection")
         gameConnection.startVoiceChat()
         muteButton = view.findViewById<Button>(R.id.muteButton)
+        isMuted = savedInstanceState?.getBoolean("isMuted") ?: false
+        muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
         muteButton.setOnClickListener{
             isMuted = !isMuted
             gameConnection.setMuted(isMuted)

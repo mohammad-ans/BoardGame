@@ -46,7 +46,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     lateinit var player2Name: String
     lateinit var player1Name: String
     private lateinit var fireworks: FireworksView
-    private lateinit var mute_button: Button
+    private lateinit var muteButton: Button
     var sizeTile: Int = 0
     var heightTile: Int = 0
 
@@ -83,6 +83,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         outState.putInt("player1Turn", player1Turn)
         outState.putInt("diceVal", diceVal)
         outState.putBoolean("fireworks_running", fireworks.isRunning())
+        outState.putBoolean("isMuted", isMuted)
     }
 
     fun updateDiceImg(diceVal: Int) {
@@ -103,11 +104,15 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         gameConnection = sessionViewModel.connection
             ?: throw IllegalStateException("Game Fragment reached with no active connection")
         gameConnection.startVoiceChat()
-        mute_button = view.findViewById<Button>(R.id.muteButton)
-        mute_button.setOnClickListener{
+        muteButton = view.findViewById<Button>(R.id.muteButton)
+        if(sessionViewModel.connectionType in listOf("bot", "pvp"))
+            muteButton.visibility = View.GONE
+        isMuted = savedInstanceState?.getBoolean("isMuted") ?: false
+        muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
+        muteButton.setOnClickListener{
             isMuted = !isMuted
             gameConnection.setMuted(isMuted)
-            mute_button.text = if (isMuted) "U" else "M"
+            muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
         }
         resetGameOver = view.findViewById<Button>(R.id.reset_game_overlay)
         val isHost = sessionViewModel.isHost

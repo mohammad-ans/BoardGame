@@ -12,9 +12,12 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -25,7 +28,22 @@ import androidx.core.location.LocationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
+import kotlin.text.get
 
+
+
+class PlayerAdapter(context: Context, private val players: List<DiscoveredPlayer>, private val onBtnClick: (player : DiscoveredPlayer) -> Unit) : ArrayAdapter<DiscoveredPlayer>(context, 0, players) {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_list, parent, false)
+        val player = players[position]
+        view.findViewById<TextView>(R.id.player_join_name).text = player.playerName
+        view.findViewById<Button>(R.id.player_join).setOnClickListener {
+            onBtnClick(player)
+        }
+        return view
+    }
+
+}
 class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
     private val requiredPermissions = arrayOf(
@@ -38,14 +56,21 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     )
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var connection: NearbyGameConnection
-    private lateinit var status: TextView
-    private lateinit var progress: ProgressBar
+    private lateinit var statusJoin: TextView
     private lateinit var live: ListView
     private lateinit var btnHost: Button
     private lateinit var btnJoin: Button
+    private lateinit var hostScreen: LinearLayout
+    private lateinit var mainScreen : LinearLayout
+    private lateinit var joinScreen: LinearLayout
+    private lateinit var backMain: Button
+    private lateinit var progressJoin: ProgressBar
+    private lateinit var progressHost: ProgressBar
+    private lateinit var currentLayout: LinearLayout
+    private var backStack = mutableListOf<LinearLayout>()
     private var check = 0
     private var discoveredPlayers: List<DiscoveredPlayer> = emptyList()
-    private lateinit var playersAdapter: ArrayAdapter<String>
+    private lateinit var playersAdapter: PlayerAdapter
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
         (requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
     }
@@ -62,7 +87,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         }
         pendingAction = null
     }
-//    private val prefs by lazy { requireContext().getSharedPreferences("permission_prefs", Context.MODE_PRIVATE) }
     private var usernameTwo = "Player"
 
     var prefs : SharedPreferences? = null
@@ -87,38 +111,56 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     override fun onViewCreated(view : View, savedInstanceState: Bundle?) {
 
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-        status = view.findViewById<TextView>(R.id.nearbyStatus)
+        statusJoin = view.findViewById<TextView>(R.id.joining_nearby_text)
         live = view.findViewById<ListView>(R.id.nearbyLive)
-        progress = view.findViewById<ProgressBar>(R.id.nearbyProgressSearching)
         btnJoin = view.findViewById<Button>(R.id.nearbyBtnJoin)
         btnHost = view.findViewById<Button>(R.id.nearbyBtnHost)
+        mainScreen = view.findViewById<LinearLayout>(R.id.nearby_main)
+        currentLayout = mainScreen
+        hostScreen = view.findViewById<LinearLayout>(R.id.nearby_host)
+        joinScreen = view.findViewById<LinearLayout>(R.id.nearby_join)
+
+        backMain = view.findViewById<Button>(R.id.backBtnNearby)
+        progressHost = view.findViewById<ProgressBar>(R.id.nearbyProgressSearching)
+        progressJoin = view.findViewById<ProgressBar>(R.id.nearbyProgressJoin)
 
         connection = NearbyGameConnection(requireContext(), localPlayerName = playerName())
-        playersAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, mutableListOf())
+        playersAdapter = PlayerAdapter(requireContext(), mutableListOf<DiscoveredPlayer>(), ::playerJoin)
         live.adapter = playersAdapter
         if(!hasAllPermissions()) {
             permissionLauncher.launch(requiredPermissions)
         }
     }
 
+    private fun playerJoin(player: DiscoveredPlayer) {
+        statusJoin.text = getString(R.string.outgoing_request, player.playerName)
+        usernameTwo = player.playerName
+        connection.connectToEndpoint(
+            endpointId = player.endpointId,
+            onOpponentConnected = { onConnected(isHost = false)},
+            onRejected = {
+                requireActivity().runOnUiThread {
+                    statusJoin.text = getString(R.string.req_declined)
+                }
+            }
+        )
+    }
     private fun setup(){
         btnHost.setOnClickListener{ checkLocation {  checkBluetooth {startHostFlow() }}}
         btnJoin.setOnClickListener { checkLocation {  checkBluetooth {startJoinFlow()} }}
-        live.setOnItemClickListener{_, _, position, _ ->
-            val player = discoveredPlayers[position]
-            status.text = "Requesting to join ${player.playerName}"
-            usernameTwo = player.playerName
-            connection.connectToEndpoint(
-                endpointId = player.endpointId,
-                onOpponentConnected = { onConnected(isHost = false)},
-                onRejected = {
-                    requireActivity().runOnUiThread {
-                        status.text = "Request declined. Pick another player or try again"
-                    }
-                }
-            )
 
+        backMain.setOnClickListener {
+            if(backStack.isEmpty()){
+                findNavController().popBackStack()
+            }
+            else {
+                val tempLayout = backStack.removeAt(backStack.lastIndex)
+                tempLayout.visibility = View.VISIBLE
+                currentLayout.visibility = View.GONE
+                currentLayout = tempLayout
+            }
         }
+
     }
     private fun checkBluetooth(f : () -> Unit){
         if(bluetoothAdapter?.isEnabled == true)
@@ -146,50 +188,60 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     }
     private fun startHostFlow() {
         btnHost.isEnabled = false
-        btnJoin.isEnabled = false
-        progress.visibility = View.VISIBLE
-        status.text = "Waiting for players to join"
-        live.visibility = View.GONE
+        hostScreen.visibility = View.VISIBLE
+        currentLayout = hostScreen
+        mainScreen.visibility = View.GONE
+        backStack.add(mainScreen)
 
         connection.startHosting(
             onIncomingRequest = {request -> showAcceptDeclineDialog(request)},
             onOpponentConnected = {onConnected(isHost = true)},
             onOpponentDisconnected = {
-                requireActivity().runOnUiThread { status.text="Opponent disconnected" }
+                requireActivity().runOnUiThread { Toast.makeText(requireContext(), "Opponent Disconnected", Toast.LENGTH_LONG).show() }
             }
         )
     }
     private fun startJoinFlow() {
-        btnHost.isEnabled = false
         btnJoin.isEnabled = false
-        progress.visibility = View.VISIBLE
-        status.text = "Searching for nearby players..."
-        live.visibility = View.VISIBLE
+        joinScreen.visibility = View.VISIBLE
+        currentLayout = joinScreen
+        mainScreen.visibility = View.GONE
+        backStack.add(mainScreen)
+        statusJoin.text = getString(R.string.searching_nearby)
+        progressJoin.visibility = View.VISIBLE
 
         connection.startDiscovery { updatedList ->
             requireActivity().runOnUiThread {
+                if(updatedList.isNotEmpty()){
+                    progressJoin.visibility = View.GONE
+                    statusJoin.text = getString(R.string.tap_players)
+                }
+                else {
+                    progressJoin.visibility = View.VISIBLE
+                    statusJoin.text = getString(R.string.searching_nearby)
+                }
                 discoveredPlayers = updatedList
                 playersAdapter.clear()
-                playersAdapter.addAll(updatedList.map {it.playerName})
+                playersAdapter.addAll(updatedList)
                 playersAdapter.notifyDataSetChanged()
-                status.text = if (updatedList.isEmpty()) "Searching for nearby games..." else "Tap a player to join"
             }
 
         }
     }
     private fun showAcceptDeclineDialog(request: IncomingRequest) {
+        val view = layoutInflater.inflate(R.layout.incoming_request, null)
+        view.findViewById<TextView>(R.id.hosting_nearby_text).text = getString(R.string.incoming_request, request.playerName)
+        view.findViewById<Button>(R.id.accept).setOnClickListener {
+            connection.respondToRequest(request.endpointId, accept = true)
+            usernameTwo = request.playerName
+        }
+        view.findViewById<Button>(R.id.decline).setOnClickListener {
+            connection.respondToRequest(request.endpointId, accept = false)
+        }
         requireActivity().runOnUiThread {
             AlertDialog.Builder(requireContext())
-                .setTitle("${request.playerName} wants to join")
-                .setCancelable(false)
-                .setPositiveButton("Accept") {_,_ ->
-                    connection.respondToRequest(request.endpointId, accept = true)
-                    usernameTwo = request.playerName
-                }
-                .setNegativeButton("Decline") {_, _ ->
-                    connection.respondToRequest(request.endpointId, accept = false)
-                    status.text = "Declined. Still waiting for players..."
-                }
+                .setView(view)
+                .create()
                 .show()
         }
     }
@@ -227,7 +279,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 startActivity(intent)
                 check = 1
             }.setNegativeButton("Cancel"){_,_ ->
-                goBack("No way to play without permissions")
+                goBack("You cannot play this mode without permissions")
             }.show()
     }
     private fun goBack(text : String){
@@ -251,6 +303,5 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
             connection.disconnect()
         }
     }
-
 
 }

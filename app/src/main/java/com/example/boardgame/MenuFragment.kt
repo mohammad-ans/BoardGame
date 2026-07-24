@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -13,23 +14,42 @@ import androidx.navigation.fragment.findNavController
 class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var usernameInput: EditText
     private lateinit var usernameConfirm : Button
-    private lateinit var usernameOverlay : ConstraintLayout
-    private lateinit var profileButton : Button
+    private lateinit var usernameInputArea : ConstraintLayout
+    private lateinit var usernameCancel : Button
+    private lateinit var editUsernameButton : Button
+    private lateinit var usernameValue : TextView
+    private lateinit var usernameInitial : TextView
     var prefs : SharedPreferences? = null
 
     override fun onViewCreated(view : View, savedInstanceState : Bundle?) {
         usernameInput = view.findViewById<EditText>(R.id.username_input)
         usernameConfirm = view.findViewById<Button>(R.id.username_input_confirm)
-        usernameOverlay = view.findViewById<ConstraintLayout>(R.id.username_input_overlay)
-        profileButton = view.findViewById<Button>(R.id.profile_menu_icon)
+        usernameInputArea = view.findViewById<ConstraintLayout>(R.id.username_input_area)
+        usernameCancel = view.findViewById<Button>(R.id.username_cancel_btn)
+        editUsernameButton = view.findViewById<Button>(R.id.edit_username_btn)
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        usernameValue = view.findViewById<TextView>(R.id.username_value)
+        usernameInitial = view.findViewById<TextView>(R.id.username_initial)
+
         val username = getUsername()
-        if(username == null){
-            usernameOverlay.visibility = View.VISIBLE
+        usernameInitial.text = getString(R.string.username_initial, username[0])
+        usernameValue.text = getString(R.string.username_val, username)
+
+        editUsernameButton.setOnClickListener {
+            usernameInputArea.visibility = View.VISIBLE
         }
         usernameConfirm.setOnClickListener{
-            prefs?.edit()?.putString("username", usernameInput.text.toString())?.apply()
-            usernameOverlay.visibility = View.GONE
+            val username = usernameInput.text.toString()
+            if(username.isEmpty()){
+                return@setOnClickListener
+            }
+            prefs?.edit()?.putString("username", username)?.apply()
+            usernameInitial.text = getString(R.string.username_initial, username[0])
+            usernameValue.text = getString(R.string.username_val, username)
+            usernameInputArea.visibility = View.GONE
+        }
+        usernameCancel.setOnClickListener {
+            usernameInputArea.visibility = View.GONE
         }
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<Button>(R.id.offline_mode).setOnClickListener {
@@ -45,8 +65,12 @@ class MenuFragment : Fragment(R.layout.menu) {
             findNavController().navigate(R.id.mode_to_profile)
         }
     }
-    private fun getUsername() : String?{
+    private fun getUsername() : String{
         val username = prefs?.getString("username", null)
+        if (username == null || username.isEmpty()) {
+            prefs?.edit()?.putString("username", "Username")
+            return "Username"
+        }
         return username
     }
 }

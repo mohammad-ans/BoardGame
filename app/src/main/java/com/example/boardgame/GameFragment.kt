@@ -105,6 +105,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             ?: throw IllegalStateException("Game Fragment reached with no active connection")
         gameConnection.startVoiceChat()
         muteButton = view.findViewById<Button>(R.id.muteButton)
+        if(sessionViewModel.connectionType in listOf("bot", "pvp"))
+            muteButton.visibility = View.GONE
         isMuted = savedInstanceState?.getBoolean("isMuted") ?: false
         muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
         muteButton.setOnClickListener{

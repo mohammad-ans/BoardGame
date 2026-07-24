@@ -15,6 +15,9 @@ interface GameConnection {
     fun sendMove(move : GameMove)
     fun onMoveReceived(callback: (GameMove) -> Unit)
     fun disconnect()
+    fun startVoiceChat() {}
+    fun stopVoiceChat() {}
+    fun setMuted(muted: Boolean) {}
 }
 
 data class DiscoveredPlayer(

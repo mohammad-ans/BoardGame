@@ -23,6 +23,12 @@
             android:layout_marginBottom="5dp"
             android:paddingStart="6dp"
             >
+            <Button
+                android:id="@+id/muteButton"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="U"
+                />
             <TextView
                 android:id="@+id/player1"
                 android:layout_width="wrap_content"

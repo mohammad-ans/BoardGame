@@ -16,7 +16,7 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var connection: OnlineGameConnection
 
-    private val serverUrl = "ws://localhost:8000"
+    private val serverUrl = "ws://10.0.2.2:8000/ws"
     private lateinit var status: TextView
     private lateinit var progress: ProgressBar
     private lateinit var codeArea: EditText
@@ -56,9 +56,8 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 }
             },
             onFailed = {showFailure("Could not reach server")},
-            onMatched = {
-                sessionViewModel.isHost = true
-                onConnected()
+            onMatched = { _, turn ->
+                onConnected(turn)
             }
         )
 
@@ -72,9 +71,8 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         setBusy("Joining Room $code...")
         connection.joinRoom(
             roomCode = code,
-            onJoined = {
-                sessionViewModel.isHost = false
-                onConnected()},
+            onJoined = {_, turn ->
+                onConnected(turn)},
             onFailed = {message -> showFailure(message)}
         )
     }
@@ -82,12 +80,14 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         setBusy("Finding a match")
         connection.findRandomMatch(
             onWaiting = {requireActivity().runOnUiThread { status.text = "Waiting for another player to join" }},
-            onMatched = {onConnected()},
+            onMatched = {_, turn ->
+                onConnected(turn)},
             onFailed = {showFailure("Could not reach server")}
 
         )
     }
-    private fun onConnected() {
+    private fun onConnected(turn: Boolean) {
+        sessionViewModel.isHost = turn
         sessionViewModel.connection = connection
         sessionViewModel.connectionType = "online"
         prefs?.edit()?.putString("username2", "Opponent")?.apply()

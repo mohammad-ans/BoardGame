@@ -46,6 +46,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     lateinit var player2Name: String
     lateinit var player1Name: String
     private lateinit var fireworks: FireworksView
+    private lateinit var mute_button: Button
     var sizeTile: Int = 0
     var heightTile: Int = 0
 
@@ -54,6 +55,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
+    var isMuted: Boolean = true
     val snakes = mapOf<Int, Int>(
         49 to 38,
         47 to 36,
@@ -98,10 +100,16 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     var prefs: SharedPreferences? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         gameConnection = sessionViewModel.connection
             ?: throw IllegalStateException("Game Fragment reached with no active connection")
+        gameConnection.startVoiceChat()
+        mute_button = view.findViewById<Button>(R.id.muteButton)
+        mute_button.setOnClickListener{
+            isMuted = !isMuted
+            gameConnection.setMuted(isMuted)
+            mute_button.text = if (isMuted) "U" else "M"
+        }
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
         player2Name = prefs?.getString("username2", "Player")!!
@@ -175,7 +183,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         tiles = ArrayList()
 
         var i = 50
-        var j = i
+        var j : Int
         while (i > 0) {
             j = i - 5
             while (i > j) {
@@ -413,7 +421,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset Game?")
             .setMessage("Current game is in progress. Do you want to forfeit?")
-            .setPositiveButton("Reset", { _, _, -> sendForfeitSignal() })
+            .setPositiveButton("Reset", { _, _ -> sendForfeitSignal() })
             .setNegativeButton("Nope", null)
             .setCancelable(true)
             .show()
@@ -494,7 +502,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         val rowCheck = end / 5
         val p = player.layoutParams as ConstraintLayout.LayoutParams
         val bottom = heightTile * rowCheck
-        var left = 0
+        var left : Int
         if ((rowCheck % 2) == 0) {
             left = (end % 5) * tiles[0].width
         } else {
@@ -506,8 +514,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        gameConnection.stopVoiceChat()
         if (isRemoving) {
-            gameConnection.sendMove(GameMove(player1Name, -1))
+            gameConnection.sendMove(GameMove(player1Name, 0))
             gameConnection.disconnect()
         }
     }

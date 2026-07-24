@@ -35,7 +35,9 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
     private lateinit var roomLayout: LinearLayout
     private lateinit var joinLayout: LinearLayout
     private lateinit var hostLayout: LinearLayout
-
+    private lateinit var currentLayout: LinearLayout
+    private var backStack = mutableListOf<LinearLayout>()
+    private lateinit var backBtn: Button
     private var prefs: SharedPreferences? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -46,10 +48,12 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         connection = OnlineGameConnection(requireContext(), username!!, serverUrl)
 
         mainLayout = view.findViewById<LinearLayout>(R.id.online_main)
+        currentLayout = mainLayout
         roomLayout = view.findViewById<LinearLayout>(R.id.online_room)
         joinLayout = view.findViewById<LinearLayout>(R.id.online_room_join)
         hostLayout = view.findViewById<LinearLayout>(R.id.online_room_host)
 
+        backBtn = view.findViewById<Button>(R.id.backBtnMain)
         status = view.findViewById<TextView>(R.id.overall_status)
         progress = view.findViewById<ProgressBar>(R.id.onlineProgressSearching)
         randomMatch = view.findViewById<Button>(R.id.onlineBtnRandom)
@@ -72,39 +76,43 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         }
         roomBtn.setOnClickListener {
             roomLayout.visibility = View.VISIBLE
+            backStack.add(mainLayout)
+            currentLayout = roomLayout
             mainLayout.visibility = View.GONE
         }
         randomMatch.setOnClickListener { onRandomMatchLis() }
         goToJoin.setOnClickListener {
             joinLayout.visibility = View.VISIBLE
+            backStack.add(roomLayout)
+            currentLayout = joinLayout
             roomLayout.visibility = View.GONE
         }
-        view.findViewById<Button>(R.id.backBtn).setOnClickListener {
-            mainLayout.visibility = View.VISIBLE
-            roomLayout.visibility = View.GONE
-        }
-        view.findViewById<Button>(R.id.backBtnMain).setOnClickListener {
-            findNavController().popBackStack()
-        }
-        view.findViewById<Button>(R.id.backBtnHost).setOnClickListener {
-            roomLayout.visibility = View.VISIBLE
-            hostLayout.visibility = View.GONE
-            goToJoin.isEnabled = true
-        }
-        view.findViewById<Button>(R.id.backBtnJoin).setOnClickListener {
-            roomLayout.visibility = View.VISIBLE
-            joinLayout.visibility = View.GONE
+        backBtn.setOnClickListener {
+            if(backStack.isEmpty()){
+                findNavController().popBackStack()
+            }
+            else{
+                val tempLayout = backStack.removeAt(backStack.lastIndex)
+                tempLayout.visibility = View.VISIBLE
+                currentLayout.visibility = View.GONE
+                currentLayout = tempLayout
+                goToJoin.isEnabled = true
+                roomBtn.isEnabled = true
+            }
+
         }
     }
-    private fun setBusy(message : String) {
+    private fun setBusy() {
         status.setTextColor(android.graphics.Color.WHITE)
-        status.text = message
+        status.text = getString(R.string.finding_match)
         progress.visibility = View.VISIBLE
     }
     private fun onCreateRoomLis() {
         goToJoin.isEnabled = false
         roomLayout.visibility = View.GONE
         hostLayout.visibility = View.VISIBLE
+        backStack.add(roomLayout)
+        currentLayout = hostLayout
         progressHost.visibility = View.VISIBLE
         connection.createRoom(
             onCreated = {roomCode->
@@ -146,7 +154,7 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         )
     }
     private fun onRandomMatchLis() {
-        setBusy("Finding a match")
+        setBusy()
         roomBtn.isEnabled = false
         connection.findRandomMatch(
             onWaiting = {requireActivity().runOnUiThread {

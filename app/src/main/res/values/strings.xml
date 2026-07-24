@@ -49,4 +49,5 @@
     <string name="server_error">Could Not reach server.</string>
     <string name="empty_code">Enter a room code first</string>
     <string name="joining">Joining Room…</string>
+    <string name="finding_match">Finding match…</string>
 </resources>

@@ -25,6 +25,9 @@ class OfflineFragment: Fragment(R.layout.offline_fragment) {
 
         btnBot.setOnClickListener(::botHandler)
         btnPvp.setOnClickListener(::pvpHandler)
+        view.findViewById<Button>(R.id.backBtnOffline).setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
     private fun botHandler(view: View){
         findNavController().navigate(R.id.offline_to_game)

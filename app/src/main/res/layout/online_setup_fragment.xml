@@ -5,8 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/teal_950"
-    android:padding="24dp"
+    android:paddingHorizontal="24dp"
+    android:paddingBottom="24dp"
+    android:paddingTop="24dp"
     >
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/backBtnMain"
+        android:background="@drawable/back_arrow"
+        android:textColor="@color/heading"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="-18dp"
+        />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -78,15 +90,6 @@
             android:layout_gravity="center"
             android:visibility="gone"
             />
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/backBtnMain"
-            android:text="@string/back"
-            android:background="@drawable/teal_border_button"
-            android:layout_marginVertical="8dp"
-            android:textColor="@color/heading"
-            />
     </LinearLayout>
 
 
@@ -135,16 +138,6 @@
             android:textSize="16sp"
             android:paddingVertical="18dp"
             />
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/backBtn"
-            android:text="@string/back"
-            android:background="@drawable/teal_border_button"
-            android:layout_marginVertical="8dp"
-            android:textColor="@color/heading"
-            />
-
     </LinearLayout>
 
 
@@ -175,7 +168,7 @@
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Room Code"
+            android:hint="@string/room_code"
             android:textColorHint="@color/white"
             android:id="@+id/room_code_input"
             android:textColor="@color/white"
@@ -199,15 +192,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/join_friendly_room_status"
-            />
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/backBtnJoin"
-            android:text="@string/back"
-            android:background="@drawable/teal_border_button"
-            android:layout_marginVertical="8dp"
-            android:textColor="@color/heading"
             />
     </LinearLayout>
 
@@ -267,15 +251,6 @@
             android:indeterminateTint="@color/heading"
             android:layout_marginTop="16dp"
             android:layout_gravity="center"
-            />
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/backBtnHost"
-            android:text="@string/back"
-            android:background="@drawable/teal_border_button"
-            android:layout_marginVertical="8dp"
-            android:textColor="@color/heading"
             />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

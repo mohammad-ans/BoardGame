@@ -6,10 +6,21 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="@color/teal_950"
-        android:padding="24dp"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="24dp"
+        android:paddingTop="24dp"
         android:id="@+id/nearby_main"
         >
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/backBtnOffline"
+        android:background="@drawable/back_arrow"
+        android:textColor="@color/heading"
+        android:layout_marginStart="-18dp"
+        android:contentDescription="@string/back"
+        />
 
     <TextView
         android:layout_width="match_parent"

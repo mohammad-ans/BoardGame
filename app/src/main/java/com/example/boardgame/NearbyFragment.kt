@@ -63,11 +63,11 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private lateinit var hostScreen: LinearLayout
     private lateinit var mainScreen : LinearLayout
     private lateinit var joinScreen: LinearLayout
-    private lateinit var backBtn: Button
     private lateinit var backMain: Button
     private lateinit var progressJoin: ProgressBar
     private lateinit var progressHost: ProgressBar
-
+    private lateinit var currentLayout: LinearLayout
+    private var backStack = mutableListOf<LinearLayout>()
     private var check = 0
     private var discoveredPlayers: List<DiscoveredPlayer> = emptyList()
     private lateinit var playersAdapter: PlayerAdapter
@@ -116,11 +116,11 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         btnJoin = view.findViewById<Button>(R.id.nearbyBtnJoin)
         btnHost = view.findViewById<Button>(R.id.nearbyBtnHost)
         mainScreen = view.findViewById<LinearLayout>(R.id.nearby_main)
+        currentLayout = mainScreen
         hostScreen = view.findViewById<LinearLayout>(R.id.nearby_host)
         joinScreen = view.findViewById<LinearLayout>(R.id.nearby_join)
 
-        backBtn = view.findViewById<Button>(R.id.backBtn)
-        backMain = view.findViewById<Button>(R.id.backBtnMain)
+        backMain = view.findViewById<Button>(R.id.backBtnNearby)
         progressHost = view.findViewById<ProgressBar>(R.id.nearbyProgressSearching)
         progressJoin = view.findViewById<ProgressBar>(R.id.nearbyProgressJoin)
 
@@ -149,12 +149,16 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         btnHost.setOnClickListener{ checkLocation {  checkBluetooth {startHostFlow() }}}
         btnJoin.setOnClickListener { checkLocation {  checkBluetooth {startJoinFlow()} }}
 
-        backBtn.setOnClickListener {
-            mainScreen.visibility = View.VISIBLE
-            joinScreen.visibility = View.GONE
-        }
         backMain.setOnClickListener {
-            findNavController().popBackStack()
+            if(backStack.isEmpty()){
+                findNavController().popBackStack()
+            }
+            else {
+                val tempLayout = backStack.removeAt(backStack.lastIndex)
+                tempLayout.visibility = View.VISIBLE
+                currentLayout.visibility = View.GONE
+                currentLayout = tempLayout
+            }
         }
 
     }
@@ -185,7 +189,9 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private fun startHostFlow() {
         btnHost.isEnabled = false
         hostScreen.visibility = View.VISIBLE
+        currentLayout = hostScreen
         mainScreen.visibility = View.GONE
+        backStack.add(mainScreen)
 
         connection.startHosting(
             onIncomingRequest = {request -> showAcceptDeclineDialog(request)},
@@ -198,9 +204,12 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private fun startJoinFlow() {
         btnJoin.isEnabled = false
         joinScreen.visibility = View.VISIBLE
+        currentLayout = joinScreen
         mainScreen.visibility = View.GONE
+        backStack.add(mainScreen)
         statusJoin.text = getString(R.string.searching_nearby)
         progressJoin.visibility = View.VISIBLE
+
         connection.startDiscovery { updatedList ->
             requireActivity().runOnUiThread {
                 if(updatedList.isNotEmpty()){

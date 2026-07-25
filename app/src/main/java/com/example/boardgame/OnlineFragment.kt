@@ -18,7 +18,7 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var connection: OnlineGameConnection
 
-    private val serverUrl = "ws://10.0.2.2:8000/ws"
+    private val serverUrl = "wss://yappyyap.xyz:443/ws"
     private lateinit var status: TextView
     private lateinit var progress: ProgressBar
     private lateinit var codeArea: EditText

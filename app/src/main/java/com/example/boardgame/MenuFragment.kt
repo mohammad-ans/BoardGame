@@ -61,9 +61,6 @@ class MenuFragment : Fragment(R.layout.menu) {
         view.findViewById<Button>(R.id.nearby_mode).setOnClickListener {
             findNavController().navigate(R.id.mode_to_friendly_loading)
         }
-        profileButton.setOnClickListener {
-            findNavController().navigate(R.id.mode_to_profile)
-        }
     }
     private fun getUsername() : String{
         val username = prefs?.getString("username", null)

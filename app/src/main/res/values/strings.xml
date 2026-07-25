@@ -23,7 +23,7 @@
     <string name="mode_choice">Choose a Mode</string>
     <string name="username">Username</string>
     <string name="username_val">%1$s</string>
-    <string name="username_initial">%1%s</string>
+    <string name="username_initial">%1$s</string>
     <string name="edit_option">Edit</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
@@ -45,6 +45,7 @@
     <string name="host_room">Host Room</string>
     <string name="enter">Enter Room</string>
     <string name="room_code">Room Code: %1$s</string>
+    <string name="room_code_waiting">Room Code: Loading…</string>
     <string name="join_wait">Waiting for player to join…</string>
     <string name="server_error">Could Not reach server.</string>
     <string name="empty_code">Enter a room code first</string>

@@ -123,6 +123,8 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 }
             },
             onFailed = {
+                if(findNavController().currentDestination?.id != R.id.online_fragment)
+                    findNavController().popBackStack()
                 statusHost.setTextColor(android.graphics.Color.RED)
                 statusHost.text = getString(R.string.server_error)
                 goToJoin.isEnabled = true
@@ -148,6 +150,8 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
             onJoined = {_, turn ->
                 onConnected(turn)},
             onFailed = {message ->
+                if(findNavController().currentDestination?.id != R.id.online_fragment)
+                    findNavController().popBackStack()
                 statusJoin.setTextColor(android.graphics.Color.RED)
                 statusJoin.text = message
             }
@@ -165,6 +169,8 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 onConnected(turn)},
             onFailed = {
                 requireActivity().runOnUiThread {
+                    if(findNavController().currentDestination?.id != R.id.online_fragment)
+                        findNavController().popBackStack()
                     status.text = getString(R.string.server_error)
                     status.setTextColor(android.graphics.Color.RED)
                     progress.visibility = View.GONE

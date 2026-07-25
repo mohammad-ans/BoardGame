@@ -107,7 +107,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         muteButton = view.findViewById<Button>(R.id.muteButton)
         if(sessionViewModel.connectionType in listOf("bot", "pvp"))
             muteButton.visibility = View.GONE
-        isMuted = savedInstanceState?.getBoolean("isMuted") ?: false
+        isMuted = savedInstanceState?.getBoolean("isMuted") ?: true
         muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
         muteButton.setOnClickListener{
             isMuted = !isMuted
@@ -117,7 +117,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         resetGameOver = view.findViewById<Button>(R.id.reset_game_overlay)
         val isHost = sessionViewModel.isHost
         player1Name = getCurrentName()
-        player2Name = prefs?.getString("username2", "Player")!!
+        player2Name = prefs?.getString("username2", "Player 2")!!
         val defaultTurn = if (isHost) 1 else 2
         player1Turn = savedInstanceState?.getInt("player1Turn") ?: defaultTurn
 
@@ -133,7 +133,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     resetGame(false)
                 else if (move.diceVal == 0) {
                     resetGameOver.text = "Go Back"
-                    winner(player1Name)
+                    if(!fireworks.isRunning())
+                        winner(player1Name)
                     resetGameOver.setOnClickListener {
                         findNavController().popBackStack()
                     }
@@ -213,7 +214,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 changePosition(player1Icon, 0, min(player1Pos - 1, 49))
 
         }
-        turn.text = getString(R.string.player_turn_dynamic, player1Turn)
+        turn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
         resetBtn.setOnClickListener { resetGameCheck() }
         diceImg.setOnClickListener {
             diceRoll()
@@ -370,7 +371,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         if (sessionViewModel.connectionType == "pvp") {
             enableDice()
         }
-        turn.text = getString(R.string.player_turn_dynamic, player1Turn)
+        turn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
     }
 
     fun resetGame(midGameReset: Boolean = false) {
@@ -382,11 +383,12 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         player1Pos = 0
         player2Pos = 0
-        player1Turn = 1
+        if(sessionViewModel.connectionType == "pvp" || sessionViewModel.connectionType == "bot")
+            player1Turn = 1
 
-        player1.text = getString(R.string.player_1)
-        player2.text = getString(R.string.player_2)
-        turn.text = getString(R.string.player_turn)
+        player1.text = getString(R.string.player_1_dynamic, player1Name, 0)
+        player2.text = getString(R.string.player_2_dynamic, player2Name, 0)
+        turn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
         diceImg.setImageResource(R.drawable.dice_one)
         enableDice()
         changePosition(player2Icon, player2Pos - 1, 0)
@@ -527,7 +529,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     fun getCurrentName(): String {
         val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-        return prefs.getString("username", "Player")!!
+        return prefs.getString("username", "Player 1")!!
     }
 
 }

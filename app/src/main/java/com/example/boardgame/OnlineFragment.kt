@@ -178,7 +178,6 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         sessionViewModel.isHost = turn
         sessionViewModel.connection = connection
         sessionViewModel.connectionType = "online"
-        prefs?.edit()?.putString("username2", "Opponent")?.apply()
         requireActivity().runOnUiThread {
             findNavController().navigate(R.id.online_to_game)
         }

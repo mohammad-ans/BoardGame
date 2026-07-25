@@ -243,9 +243,11 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         view.findViewById<TextView>(R.id.hosting_nearby_text).text = getString(R.string.incoming_request, request.playerName)
         view.findViewById<Button>(R.id.accept).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = true)
+            view.visibility = View.GONE
         }
         view.findViewById<Button>(R.id.decline).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = false)
+            view.visibility = View.GONE
         }
         requireActivity().runOnUiThread {
             AlertDialog.Builder(requireContext())

@@ -38,7 +38,7 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
     private val serviceID = "com.example.boardgame"
     private val connectionsClient = Nearby.getConnectionsClient(context)
     private var connectedEndPointId: String? = null
-    private var moveCallback: ((GameMove) -> Unit)? = null
+    var moveCallback: ((GameMove) -> Unit)? = null
 
     private val discoveredPlayers = mutableMapOf<String, DiscoveredPlayer>()
     private var endpointsUpdatedCallback: ((List<DiscoveredPlayer>) -> Unit)? = null

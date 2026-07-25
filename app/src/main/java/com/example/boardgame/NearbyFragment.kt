@@ -69,6 +69,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private lateinit var currentLayout: LinearLayout
     private var backStack = mutableListOf<LinearLayout>()
     private var check = 0
+    private var usernameTwo = "Player 2"
     private var discoveredPlayers: List<DiscoveredPlayer> = emptyList()
     private lateinit var playersAdapter: PlayerAdapter
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
@@ -205,6 +206,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
             },
             onOpponentDisconnected = {
+                connection.moveCallback?.invoke(GameMove(usernameTwo, 0))
                 requireActivity().runOnUiThread { Toast.makeText(requireContext(), "Opponent Disconnected", Toast.LENGTH_LONG).show() }
             }
         )

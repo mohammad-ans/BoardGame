@@ -31,8 +31,9 @@ import kotlin.uuid.Uuid
 
 class OnlineGameConnection(private val context: Context, private val playerName: String, private val serverUrl : String) : GameConnection {
     private var moveCallback: ((GameMove) -> Unit)? = null
-    private  val client = OkHttpClient.Builder().pingInterval(20, TimeUnit.SECONDS).build()
+    private  val client = OkHttpClient.Builder().pingInterval(20, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()
     private var webSocket : WebSocket? = null
+    private var isMuted = true
     private var currentRoomCode: String? = null
     private var onRoomCreated: ((String) -> Unit)? = null
     private var onMatched: ((String, Boolean) -> Unit)? = null
@@ -114,6 +115,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 val turn = json.getInt("turn") == 1
                 currentRoomCode = json.getString("room_code")
                 isInitiator = json.getBoolean("is_initiator")
+                Log.e("Test", "$turn $isInitiator")
                 onMatched?.invoke(currentRoomCode!!, turn)
             }
             "player_joined" -> {
@@ -165,15 +167,22 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 else
                     pendingIceCandidates.add(candidate)
             }
-            "username" -> prefs.edit().putString("username2", json.getString("username"))
+            "username" -> prefs.edit().putString("username2", json.getString("username")).apply()
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
         }
+    }
+
+
+    override fun setMuted(muted: Boolean) {
+        isMuted = muted
+        localAudioTrack?.setEnabled(!isMuted)
     }
     override fun startVoiceChat() {
         val constraints = MediaConstraints()
         audioSource = peerConnectionFactory.createAudioSource(constraints)
         localAudioTrack = peerConnectionFactory.createAudioTrack("audio_track", audioSource)
+        localAudioTrack?.setEnabled(!isMuted)
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers)
         peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, object : PeerConnection.Observer {
             override fun onIceCandidate(candidate: IceCandidate?) {
@@ -322,10 +331,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         onOpponentDisconnected: () -> Unit
     ) {
         TODO("Not yet implemented")
-    }
-
-    override fun setMuted(muted: Boolean) {
-        localAudioTrack?.setEnabled(!muted)
     }
 
     override fun stopVoiceChat() {

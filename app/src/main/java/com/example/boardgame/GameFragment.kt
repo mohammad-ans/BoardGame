@@ -108,6 +108,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         if(sessionViewModel.connectionType in listOf("bot", "pvp"))
             muteButton.visibility = View.GONE
         isMuted = savedInstanceState?.getBoolean("isMuted") ?: true
+        gameConnection.setMuted(isMuted)
         muteButton.setBackgroundResource(if (isMuted) R.drawable.ic_mic_stop else R.drawable.ic_mic)
         muteButton.setOnClickListener{
             isMuted = !isMuted

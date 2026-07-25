@@ -46,7 +46,7 @@ class ConnectionManager:
 
         local_name = self.player_local[user]
         await self.list_conn[players[0]].send_json({"type" : "username", "username": local_name})
-        await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success"})
+        await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success", "is_initiator" : True})
         return 0, self.player_local[players[0]], room_code
     
     def random_util(self, user1 : str, user2 : str, room_code : str):
@@ -106,7 +106,7 @@ class ConnectionManager:
             self.random_util(user, player, room_code)
             local_name = self.player_local[user]
             await self.list_conn[player].send_json({"type" : "username", "username": local_name})
-            await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : turn})
+            await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : int(not turn), "is_initiator" : True})
             return turn, room_code, self.player_local[player]
         else:
             self.random_waiting.add(user)
@@ -142,7 +142,6 @@ async def main_websoc(user : WebSocket):
                             room_code = status[2]
                             await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "join_room", "status" : "success", "is_initiator" : False})
-                            await manager.relay_to_opponent(room_code, username, {"type" : "matched", "room_code" : room_code, "is_initiator" : True})
                         if status == -1:
                             await user.send_json({"type" : "join_room", "status" : "Invalid room code"})
                         elif status == -2:
@@ -155,7 +154,6 @@ async def main_websoc(user : WebSocket):
                             local_name = status[2]
                             await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0], "is_initiator" : False})
-                            await manager.relay_to_opponent(room_code, username, {"type" : "matched", "room_code" : room_code, "is_initiator" : True})
                             
                     case "voice_offer" | "voice_answer" | "voice_ice_candidate":
                         room_code = data["room_code"]

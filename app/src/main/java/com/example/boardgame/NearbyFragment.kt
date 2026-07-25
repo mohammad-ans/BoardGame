@@ -87,7 +87,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         }
         pendingAction = null
     }
-    private var usernameTwo = "Player"
 
     var prefs : SharedPreferences? = null
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
@@ -134,10 +133,12 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
     private fun playerJoin(player: DiscoveredPlayer) {
         statusJoin.text = getString(R.string.outgoing_request, player.playerName)
-        usernameTwo = player.playerName
         connection.connectToEndpoint(
             endpointId = player.endpointId,
-            onOpponentConnected = { onConnected(isHost = false)},
+            onOpponentConnected = {
+                connection.sendUsername()
+                onConnected(isHost = false)
+              },
             onRejected = {
                 requireActivity().runOnUiThread {
                     statusJoin.text = getString(R.string.req_declined)
@@ -146,6 +147,9 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         )
     }
     private fun setup(){
+        connection.onUsernameReceivedSet {name ->
+            prefs.edit().putString("username2", name).apply()
+        }
         btnHost.setOnClickListener{ checkLocation {  checkBluetooth {startHostFlow() }}}
         btnJoin.setOnClickListener { checkLocation {  checkBluetooth {startJoinFlow()} }}
 
@@ -195,7 +199,11 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
 
         connection.startHosting(
             onIncomingRequest = {request -> showAcceptDeclineDialog(request)},
-            onOpponentConnected = {onConnected(isHost = true)},
+            onOpponentConnected = {
+                connection.sendUsername()
+                onConnected(isHost = true)
+
+            },
             onOpponentDisconnected = {
                 requireActivity().runOnUiThread { Toast.makeText(requireContext(), "Opponent Disconnected", Toast.LENGTH_LONG).show() }
             }
@@ -233,7 +241,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         view.findViewById<TextView>(R.id.hosting_nearby_text).text = getString(R.string.incoming_request, request.playerName)
         view.findViewById<Button>(R.id.accept).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = true)
-            usernameTwo = request.playerName
         }
         view.findViewById<Button>(R.id.decline).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = false)
@@ -250,7 +257,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         sessionViewModel.connection = connection
         sessionViewModel.isHost = isHost
         sessionViewModel.connectionType = "online"
-        prefs?.edit()?.putString("username2", usernameTwo)?.apply()
         requireActivity().runOnUiThread {
             findNavController().navigate(R.id.friendly_to_game)
         }

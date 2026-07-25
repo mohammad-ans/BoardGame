@@ -23,8 +23,14 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
+
+@Serializable
+data class Username(val username : String)
 
 class NearbyGameConnection(private val context: Context, private val localPlayerName: String) : GameConnection {
     private val serviceID = "com.example.boardgame"
@@ -39,6 +45,7 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
     private var onOpponentConnected: (() -> Unit)? = null
     private var onOpponentDisconnected: (() -> Unit)? = null
     private var onJoinRejected: (() -> Unit)? = null
+    private var onUsernameReceived: ((String) -> Unit)? = null
     private val sampleRate = 16000
     private val channelConfigIn = AudioFormat.CHANNEL_IN_MONO
     private val channelConfigOut = AudioFormat.CHANNEL_OUT_MONO
@@ -131,13 +138,25 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
             }
         }.start()
     }
+    fun onUsernameReceivedSet(f : (String) -> Unit){
+        onUsernameReceived = f
+    }
     private val payloadCallback = object :  PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             when(payload.type){
                 Payload.Type.BYTES -> {
                     val json = String(payload.asBytes()!!, Charsets.UTF_8)
-                    val move = Json.decodeFromString<GameMove>(json)
-                    moveCallback?.invoke(move)
+                    val envelope = JSONObject(json)
+                    when(envelope.getString("kind")){
+                        "move" -> {
+                            val move = Json.decodeFromString<GameMove>(envelope.getString("data"))
+                            moveCallback?.invoke(move)
+                        }
+                        "username" -> {
+                            val username = envelope.getString("username")
+                            onUsernameReceived?.invoke(username)
+                        }
+                    }
                 }
                 Payload.Type.STREAM -> {
                     handleIncomingVoiceStream(payload)
@@ -198,7 +217,6 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
                 Toast.makeText(context, "${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
     }
-
     override fun respondToRequest(endpointId: String, accept: Boolean){
         if(accept)
             connectionsClient.acceptConnection(endpointId, payloadCallback)
@@ -241,7 +259,17 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
     override fun sendMove(move: GameMove) {
         val endpointId = connectedEndPointId ?: return
         val json = Json.encodeToString(move)
-        connectionsClient.sendPayload(endpointId, Payload.fromBytes(json.toByteArray()))
+        val payload = Payload.fromBytes(
+            JSONObject().put("kind", "move").put("data", json).toString().toByteArray()
+        )
+        connectionsClient.sendPayload(endpointId, payload)
+    }
+    fun sendUsername() {
+        val endpointId = connectedEndPointId ?: return
+        val payload = Payload.fromBytes(
+            JSONObject().put("kind", "username").put("username", localPlayerName).toString().toByteArray()
+        )
+        connectionsClient.sendPayload(endpointId, payload)
     }
 
     override fun onMoveReceived(callback: (GameMove) -> Unit) {

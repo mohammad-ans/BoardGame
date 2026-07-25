@@ -119,7 +119,10 @@ class ConnectionManager:
         opponent = players[1] if players[0] == sender else players[0]
         if opponent and opponent in self.list_conn:
             await self.list_conn[opponent].send_json(payload)
-            
+    def rejoin(self, room_code : str):
+        if room_code not in self.rooms or room_code not in self.room_players:
+            return -1
+        return 0
 manager =  ConnectionManager()
 
 @app.websocket("/ws")
@@ -165,6 +168,11 @@ async def main_websoc(user : WebSocket):
                         move = data["dice_val"]
                         await manager.send_data(room_code, username, move)
 
+                    case "rejoin":
+                        status = manager.rejoin(data["room_code"])
+                        if status == -1:
+                            await user.send_json({"type" : "move", "diceVal" : -2})
+                        
                     case "leave":
                         room_code = data["room_code"]
                         await manager.remove_connection(username, room_code)

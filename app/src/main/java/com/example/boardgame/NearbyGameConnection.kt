@@ -3,7 +3,9 @@ package com.example.boardgame
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
@@ -60,6 +62,14 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
 
     @SuppressLint("MissingPermission")
     override fun startVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        }
+        speaker?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         val endpointId = connectedEndPointId ?: return
         if (isCapturing)
             return
@@ -99,6 +109,14 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
         isMuted = muted
     }
     override fun stopVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val earpiece = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE
+        }
+        earpiece?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         isCapturing = false
         audioRecord?.stop()
         audioRecord?.release()

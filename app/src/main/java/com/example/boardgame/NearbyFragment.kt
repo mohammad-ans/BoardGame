@@ -148,7 +148,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     }
     private fun setup(){
         connection.onUsernameReceivedSet {name ->
-            prefs.edit().putString("username2", name).apply()
+            prefs?.edit()?.putString("username2", name)?.apply()
         }
         btnHost.setOnClickListener{ checkLocation {  checkBluetooth {startHostFlow() }}}
         btnJoin.setOnClickListener { checkLocation {  checkBluetooth {startJoinFlow()} }}

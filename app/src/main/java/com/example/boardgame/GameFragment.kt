@@ -14,6 +14,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -49,6 +50,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     lateinit var player1Name: String
     private lateinit var fireworks: FireworksView
     private lateinit var muteButton: Button
+    private var turnTimer : CountDownTimer? = null
+    private var timeoutDisplay : TextView? = null
+    private val timeoutSeconds = 30_000L
     var sizeTile: Int = 0
     var heightTile: Int = 0
 
@@ -188,7 +192,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
         player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
         player2Pos = savedInstanceState?.getInt("player2Pos") ?: 40
-        diceVal = savedInstanceState?.getInt("diceVal") ?: 1
+        val tempDice = savedInstanceState?.getInt("diceVal")
+        if(tempDice == 0 || tempDice == null ){
+            startTimer()
+            diceVal = 1
+        }
+        else{
+            diceVal = tempDice
+        }
         val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
 
         diceImg = view.findViewById<ImageView>(R.id.dice_image)
@@ -201,7 +212,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         fireworks = view.findViewById<FireworksView>(R.id.fireworks)
         overlayGameOver = view.findViewById<ConstraintLayout>(R.id.overlay_game_over)
         gameOverText = view.findViewById<TextView>(R.id.player_wins)
-
+        timeoutDisplay = view.findViewById<TextView>(R.id.timeout)
         if (fireworksRunning) {
             diceImg.isEnabled = false
             fireworks.start()
@@ -326,6 +337,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         updateDiceImg(diceVal)
 
         if (player1Turn == 1) {
+            cancelTimer()
             player1Turn = 2
             val start = player1Pos - 1
             player1Pos += diceVal
@@ -371,6 +383,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 }
             }
         } else {
+            cancelTimer()
             player1Turn = 1
             val start = player2Pos - 1
             player2Pos += diceVal
@@ -414,6 +427,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             enableDice()
         }
         turn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
+        startTimer()
     }
 
     fun resetGame(midGameReset: Boolean = false) {
@@ -432,6 +446,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player2.text = getString(R.string.player_2_dynamic, player2Name, 0)
         turn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
         diceImg.setImageResource(R.drawable.dice_one)
+        startTimer()
         enableDice()
         changePosition(player2Icon, player2Pos - 1, 0)
         changePosition(player1Icon, player1Pos - 1, 0)
@@ -572,6 +587,22 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     fun getCurrentName(): String {
         val prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         return prefs.getString("username", "Player 1")!!
+    }
+    private fun startTimer(){
+        turnTimer?.cancel()
+        turnTimer = object : CountDownTimer(timeoutSeconds, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                timeoutDisplay?.text = getString(R.string.timeout, millisUntilFinished/1000)
+            }
+
+            override fun onFinish() {
+                if(player1Turn == 1)
+                    sendForfeitSignal()
+            }
+        }.start()
+    }
+    private fun cancelTimer(){
+        turnTimer?.cancel()
     }
 
 }

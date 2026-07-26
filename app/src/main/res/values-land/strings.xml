@@ -51,4 +51,5 @@
     <string name="empty_code">Enter a room code first</string>
     <string name="joining">Joining Room…</string>
     <string name="finding_match">Finding match…</string>
+    <string name="timeout">Remaining: %1$ds</string>
 </resources>

@@ -25,7 +25,7 @@ interface GameConnection {
 
     fun setOnStopLoading(f: (() -> Unit)) {
     }
-    fun setOnStartLoading(view : TextView) {
+    fun setOnStartLoading(view : TextView, f : (() -> Unit)) {
     }
 
 

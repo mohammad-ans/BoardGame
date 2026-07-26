@@ -111,7 +111,7 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
     }
     override fun stopVoiceChat() {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager.mode = AudioManager.MODE_NORMAL
         val earpiece = audioManager.availableCommunicationDevices.firstOrNull {
             it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE
         }

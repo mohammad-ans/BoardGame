@@ -123,12 +123,14 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 }
             },
             onFailed = {
-                if(findNavController().currentDestination?.id != R.id.online_fragment)
-                    findNavController().popBackStack()
-                statusHost.setTextColor(android.graphics.Color.RED)
-                statusHost.text = getString(R.string.server_error)
-                goToJoin.isEnabled = true
-                progressHost.visibility = View.GONE
+                requireActivity().runOnUiThread {
+                    if(findNavController().currentDestination?.id != R.id.online_fragment)
+                        findNavController().popBackStack()
+                    statusHost.setTextColor(android.graphics.Color.RED)
+                    statusHost.text = getString(R.string.server_error)
+                    goToJoin.isEnabled = true
+                    progressHost.visibility = View.GONE
+                }
                        },
             onMatched = { _, turn ->
                 onConnected(turn)
@@ -150,16 +152,19 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
             onJoined = {_, turn ->
                 onConnected(turn)},
             onFailed = {message ->
-                if(findNavController().currentDestination?.id != R.id.online_fragment)
-                    findNavController().popBackStack()
-                statusJoin.setTextColor(android.graphics.Color.RED)
-                statusJoin.text = message
+                requireActivity().runOnUiThread {
+                    if (findNavController().currentDestination?.id != R.id.online_fragment)
+                        findNavController().popBackStack()
+                    statusJoin.setTextColor(android.graphics.Color.RED)
+                    statusJoin.text = message
+                }
             }
         )
     }
     private fun onRandomMatchLis() {
         setBusy()
         roomBtn.isEnabled = false
+        randomMatch.isEnabled = false
         connection.findRandomMatch(
             onWaiting = {requireActivity().runOnUiThread {
                 status.setTextColor(android.graphics.Color.WHITE)
@@ -174,8 +179,9 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                     status.text = getString(R.string.server_error)
                     status.setTextColor(android.graphics.Color.RED)
                     progress.visibility = View.GONE
+                    roomBtn.isEnabled = true
+                    randomMatch.isEnabled = true
                 }
-                roomBtn.isEnabled = false
             }
 
         )

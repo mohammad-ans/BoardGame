@@ -48,6 +48,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private val prefs = context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
     private var isInitiator = false
     private val eglBase = EglBase.create()
+    private var startLoading : (() -> Unit)? = null
     private var stopLoading : (() -> Unit)? = null
     private var receiveData : ((JSONObject) -> Unit)? = null
     private var loadingText : TextView? = null
@@ -80,8 +81,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                if (!recon)
-                    send(JSONObject().put("username", username).put("local", playerName))
+                Log.e("Open", "open")
+                send(JSONObject().put("username", username).put("local", playerName))
                 reconnectAttempts = 0
                 onOpen()
             }
@@ -177,10 +178,14 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
             "rejoined" -> {
-                loadingText?.text = "Reconnected, awaiting for data from the opponent"
+                Handler(Looper.getMainLooper()).post {
+                    loadingText?.text = "Reconnected, awaiting for data from the opponent"
+                }
             }
             "rejoined_opponent" -> {
-                loadingText?.text = "Opponent reconnected, sending data"
+                Handler(Looper.getMainLooper()).post {
+                    loadingText?.text = "Opponent reconnected, sending data"
+                }
                 moveCallback?.invoke(GameMove("", -5))
             }
             "rejoin_data" -> {
@@ -303,6 +308,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onRoomCreated = onCreated
         this.onConnectionFailed = onFailed
         this.onMatched = onMatched
+        this.onError = {onFailed()}
         ensureConnected(false) {
             send( JSONObject().put("type", "create_room"))
 
@@ -319,6 +325,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onWaitingForMatch = onWaiting
         this.onMatched = onMatched
         this.onConnectionFailed = onFailed
+        this.onError = {onFailed()}
         ensureConnected(false) {
             send(JSONObject().put("type", "find_random_match"))
         }
@@ -364,7 +371,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
 
     override fun stopVoiceChat() {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager.mode = AudioManager.MODE_NORMAL
         val earpiece = audioManager.availableCommunicationDevices.firstOrNull {
             it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE
         }
@@ -377,6 +384,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         audioSource = null
     }
     private fun reconnect(){
+        Log.e("Reconn", "$reconnectAttempts")
+
+        startLoading?.invoke()
         if (reconnectAttempts > maxRecon) {
             onConnectionFailed?.invoke()
             return
@@ -389,7 +399,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                     send(JSONObject().apply {
                         put("type", "rejoin")
                         put("room_code", currentRoomCode)
-                        put("username", playerName)
+                        put("username", username)
                     })
                 }
                 else{
@@ -418,8 +428,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     override fun setOnStopLoading(f: (() -> Unit)) {
         stopLoading = f
     }
-    override fun setOnStartLoading(view : TextView) {
+    override fun setOnStartLoading(view : TextView, f :(() -> Unit)) {
         loadingText = view
+        startLoading = f
     }
 
     override fun setOnReceiveData(f : ((JSONObject) -> Unit)){

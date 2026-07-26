@@ -15,6 +15,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -134,21 +135,31 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             resetGame(false)
         }
         gameConnection.setOnStopLoading {
-            overlayLoading.visibility = View.GONE
+
+            requireActivity().runOnUiThread {
+            overlayLoading.visibility = View.GONE}
         }
-        gameConnection.setOnStartLoading(loadingMsg)
+        gameConnection.setOnStartLoading(loadingMsg){
+
+            requireActivity().runOnUiThread {
+            overlayLoading.visibility = View.VISIBLE
+            loadingMsg.text = getString(R.string.own_wait)}
+        }
         gameConnection.setOnReceiveData { json ->
-            player1Turn = json.getInt("turn")
-            player1Pos = json.getInt("player2")
-            player2Pos = json.getInt("player1")
-            if(player1Pos > 49)
-                winner(player1Name)
-            else
-                winner(player2Name)
-            if (player2Pos != 0)
-                changePosition(player2Icon, 0, min(player2Pos - 1, 49))
-            if (player1Pos != 0)
-                changePosition(player1Icon, 0, min(player1Pos - 1, 49))
+
+            requireActivity().runOnUiThread {
+                player1Turn = json.getInt("turn")
+                player1Pos = json.getInt("player2")
+                player2Pos = json.getInt("player1")
+                if (player1Pos > 49)
+                    winner(player1Name)
+                else
+                    winner(player2Name)
+                if (player2Pos != 0)
+                    changePosition(player2Icon, 0, min(player2Pos - 1, 49))
+                if (player1Pos != 0)
+                    changePosition(player1Icon, 0, min(player1Pos - 1, 49))
+            }
         }
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
@@ -165,6 +176,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     }
                 }
                 else if(move.diceVal == -3){
+
+                    Log.e("Move", "${move.diceVal}")
                     overlayLoading.visibility = View.VISIBLE
                     loadingMsg.text = getString(R.string.opponent_wait)
                 }

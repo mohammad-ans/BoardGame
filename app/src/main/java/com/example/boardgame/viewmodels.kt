@@ -33,4 +33,5 @@ class GameSessionViewModel : ViewModel() {
     var isHost : Boolean = false
     var connectionType: String = "pvp"
     var playerName : String = "Bot"
+    var turnTimeout = 0L
 }

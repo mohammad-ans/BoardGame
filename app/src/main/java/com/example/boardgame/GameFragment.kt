@@ -143,6 +143,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
             requireActivity().runOnUiThread {
             overlayLoading.visibility = View.VISIBLE
+            overlayLoading.bringToFront()
             loadingMsg.text = getString(R.string.own_wait)}
         }
         gameConnection.setOnReceiveData { json ->
@@ -177,9 +178,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 }
                 else if(move.diceVal == -3){
 
-                    Log.e("Move", "${move.diceVal}")
-                    overlayLoading.visibility = View.VISIBLE
-                    loadingMsg.text = getString(R.string.opponent_wait)
+                    requireActivity().runOnUiThread {
+
+                        Log.e("Move", "${move.diceVal} ${overlayLoading.isVisible}")
+                        overlayLoading.visibility = View.VISIBLE
+                        overlayLoading.bringToFront()
+                        Log.e("Move", "${move.diceVal} ${overlayLoading.isVisible}")
+                        loadingMsg.text = getString(R.string.opponent_wait)
+                    }
                 }
                 else if(move.diceVal == -4){
                     resetGameOver.text = getString(R.string.go_back)
@@ -447,6 +453,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         if (midGameReset)
             winner(player2Name)
         fireworks.stop()
+        fireworks.visibility = View.GONE
         if (overlayGameOver.isVisible) {
             overlayGameOver.visibility = View.GONE
         }
@@ -591,6 +598,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     override fun onDestroyView() {
         super.onDestroyView()
         gameConnection.stopVoiceChat()
+        cancelTimer()
         if (isRemoving) {
             gameConnection.sendMove(GameMove(player1Name, 0))
             gameConnection.disconnect()
@@ -603,16 +611,31 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     private fun startTimer(){
         turnTimer?.cancel()
-        turnTimer = object : CountDownTimer(timeoutSeconds, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                timeoutDisplay?.text = getString(R.string.timeout, millisUntilFinished/1000)
-            }
+        sessionViewModel.turnTimeout = System.currentTimeMillis()
+        scheduleTimer()
+    }
+    private fun scheduleTimer(){
+        val remaining = sessionViewModel.turnTimeout - System.currentTimeMillis()
+        if (remaining <= 0){
+            sendForfeitSignal()
+            return
+        }
+        else{
+            turnTimer = object : CountDownTimer(timeoutSeconds, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    if(view == null)
+                        return
+                    timeoutDisplay?.text = getString(R.string.timeout, millisUntilFinished/1000)
+                }
 
-            override fun onFinish() {
-                if(player1Turn == 1)
-                    sendForfeitSignal()
-            }
-        }.start()
+                override fun onFinish() {
+                    if(view == null)
+                        return
+                    if(player1Turn == 1)
+                        sendForfeitSignal()
+                }
+            }.start()
+        }
     }
     private fun cancelTimer(){
         turnTimer?.cancel()

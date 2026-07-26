@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import random
+import asyncio
 app = FastAPI()
 
 app.add_middleware(
@@ -11,6 +12,8 @@ app.add_middleware(
         allow_headers=["*"]
 )
 
+TIMEOUT_SECONDS = 120
+
 class ConnectionManager:
     def __init__(self):
         self.rooms: set[str] = set()
@@ -19,6 +22,8 @@ class ConnectionManager:
         self.room_players: dict[str, tuple] = dict()
         self.player_room: dict[str, str] = dict()
         self.player_local: dict[str, str] = dict()
+        self.pending_disconnect: dict[str, asyncio.Task] = {}
+
     async def add_connection(self, conn : WebSocket):
         await conn.accept()
         message = await conn.receive_json()
@@ -81,6 +86,18 @@ class ConnectionManager:
         except:
             pass
 
+    async def wait_before_disconnect(self, user : str, room_code : str):
+        try:
+            players = self.room_players[room_code]
+            if players[0] == user and players[1] and players[1] in self.list_conn.keys():
+                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -3})
+            elif players[0] and players[0] in self.list_conn.keys():
+                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -3})
+            asyncio.sleep(10)
+            await self.remove_connection(user, room_code)
+        except asyncio.CancelledError:
+            raise
+
     def create_room(self):
         chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
         random_name = ""
@@ -119,8 +136,14 @@ class ConnectionManager:
         opponent = players[1] if players[0] == sender else players[0]
         if opponent and opponent in self.list_conn:
             await self.list_conn[opponent].send_json(payload)
-    def rejoin(self, room_code : str):
+
+    def rejoin(self, room_code : str, user: str):
         if room_code not in self.rooms or room_code not in self.room_players:
+            return -1
+        pending_task = self.pending_disconnect.pop(user)
+        if pending_task:
+            pending_task.cancel()
+        else:
             return -1
         return 0
 manager =  ConnectionManager()
@@ -130,7 +153,7 @@ async def main_websoc(user : WebSocket):
     username = await manager.add_connection(user)
     try:
         while True:
-            data = await user.receive_json()
+            data = await asyncio.wait_for(user.receive_json(), timeout=TIMEOUT_SECONDS)
             if "type" in data:
                 match data["type"]:
 
@@ -169,15 +192,24 @@ async def main_websoc(user : WebSocket):
                         await manager.send_data(room_code, username, move)
 
                     case "rejoin":
-                        status = manager.rejoin(data["room_code"])
+                        room_code = data["room_code"]
+                        status = manager.rejoin(room_code)
                         if status == -1:
-                            await user.send_json({"type" : "move", "diceVal" : -2})
-                        
+                            await user.send_json({"type" : "move", "diceVal" : -4})
+                        else:
+                            await user.send_json({"type" : "rejoined"})
+                            await manager.relay_to_opponent(room_code, user, {"type" : "rejoined_opponent"})
+                    case "rejoin_data":
+                        room_code = data["room_code"]
+                        await manager.relay_to_opponent(room_code, user, )
+                        await user.send_json({"type" : "stop_loading"})
                     case "leave":
                         room_code = data["room_code"]
-                        await manager.remove_connection(username, room_code)
+                        await manager.remove_connection(username, room_code, data)
                         break
                 
     except Exception as e:
         print(e)
-        await manager.remove_connection(username, None)
+    finally:
+        task = asyncio.create_task(manager.wait_before_disconnect(username, None))
+        manager.pending_disconnect[username] = task

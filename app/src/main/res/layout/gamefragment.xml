@@ -488,11 +488,12 @@
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/overlay_game_load"
+        android:id="@+id/overlay_wait"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/transparent_black"
         android:padding="24dp"
+        android:visibility="gone"
         >
     <ProgressBar
         android:layout_width="wrap_content"
@@ -515,6 +516,7 @@
             android:layout_marginTop="24dp"
             android:text="@string/opponent_wait"
             android:textSize="22sp"
+            android:id="@+id/loading_msg"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
     <androidx.constraintlayout.widget.ConstraintLayout

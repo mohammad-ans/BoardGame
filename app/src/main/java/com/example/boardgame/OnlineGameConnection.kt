@@ -6,7 +6,9 @@ import android.content.SharedPreferences
 import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings.Global.getString
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,7 +46,10 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private val prefs = context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
     private var isInitiator = false
     private val eglBase = EglBase.create()
-    private val stopLoading : (() -> Unit)? = null
+    private var stopLoading : (() -> Unit)? = null
+    private var startLoading : (() -> Unit)? = null
+    private var receiveData : ((JSONObject) -> Unit)? = null
+    private var loadingText : TextView? = null
     private val peerConnectionFactory: PeerConnectionFactory by lazy {
         PeerConnectionFactory.initialize(
             PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
@@ -170,7 +175,20 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             "username" -> prefs.edit().putString("username2", json.getString("username")).apply()
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
-            "rejoined" ->
+            "rejoined" -> {
+                loadingText?.text = "Reconnected, awaiting for data from the opponent"
+            }
+            "rejoined_opponent" -> {
+                loadingText?.text = "Opponent reconnected, sending data"
+                moveCallback?.invoke(GameMove("", -5))
+            }
+            "rejoin_data" -> {
+                receiveData?.invoke(json)
+                stopLoading?.invoke()
+            }
+            "stop_loading" -> {
+                stopLoading?.invoke()
+            }
         }
     }
 
@@ -268,7 +286,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
         }, constraints)
     }
-    private fun send(json : JSONObject) {
+    override fun send(json : JSONObject) {
         Log.e("Move", "Sending move")
         webSocket?.send(json.toString())
     }
@@ -278,6 +296,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onMatched = onMatched
         ensureConnected(false) {
             send( JSONObject().put("type", "create_room"))
+
         }
     }
     fun joinRoom(roomCode : String, onJoined: (String, Boolean) -> Unit, onFailed: (String) -> Unit) {
@@ -365,7 +384,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
 
     }
     private fun flushPendingIceCandidates() {
-//        pendingI
+        pendingIceCandidates.forEach { peerConnection?.addIceCandidate(it) }
+        pendingIceCandidates.clear()
     }
     open class SimpleSdpObserver : SdpObserver {
         override fun onCreateSuccess(sdp: SessionDescription?) {}
@@ -377,5 +397,15 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         override fun onSetFailure(error: String?) {
             Log.e("WebRTC", "Set failure: $error")
         }
+    }
+    override fun setOnStopLoading(f: (() -> Unit)) {
+        stopLoading = f
+    }
+    override fun setOnStartLoading(view : TextView) {
+        loadingText = view
+    }
+
+    override fun setOnReceiveData(f : ((JSONObject) -> Unit)){
+        receiveData = f
     }
 }

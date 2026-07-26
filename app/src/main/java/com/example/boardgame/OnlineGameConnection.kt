@@ -47,7 +47,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var isInitiator = false
     private val eglBase = EglBase.create()
     private var stopLoading : (() -> Unit)? = null
-    private var startLoading : (() -> Unit)? = null
     private var receiveData : ((JSONObject) -> Unit)? = null
     private var loadingText : TextView? = null
     private val peerConnectionFactory: PeerConnectionFactory by lazy {
@@ -365,7 +364,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             return
         }
         reconnectAttempts++;
-        val delay = 1000L * reconnectAttempts
+        val delay = 1500L
         Handler(Looper.getMainLooper()).postDelayed({
             ensureConnected(true) {
                 if(currentRoomCode != null) {

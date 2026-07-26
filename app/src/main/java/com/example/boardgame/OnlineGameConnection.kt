@@ -3,6 +3,8 @@ package com.example.boardgame
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
@@ -197,6 +199,14 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         localAudioTrack?.setEnabled(!isMuted)
     }
     override fun startVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        }
+        speaker?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         val constraints = MediaConstraints()
         audioSource = peerConnectionFactory.createAudioSource(constraints)
         localAudioTrack = peerConnectionFactory.createAudioTrack("audio_track", audioSource)
@@ -353,6 +363,14 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     override fun stopVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val earpiece = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE
+        }
+        earpiece?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         peerConnection?.close()
         peerConnection = null
         localAudioTrack = null

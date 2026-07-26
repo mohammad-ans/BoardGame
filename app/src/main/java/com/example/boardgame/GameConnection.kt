@@ -1,6 +1,8 @@
 package com.example.boardgame
 
+import android.widget.TextView
 import kotlinx.serialization.Serializable
+import org.json.JSONObject
 
 interface GameConnection {
     fun startHosting(
@@ -18,6 +20,17 @@ interface GameConnection {
     fun startVoiceChat() {}
     fun stopVoiceChat() {}
     fun setMuted(muted: Boolean) {}
+    fun send(json : JSONObject) {}
+
+
+    fun setOnStopLoading(f: (() -> Unit)) {
+    }
+    fun setOnStartLoading(view : TextView) {
+    }
+
+
+    fun setOnReceiveData(f : ((JSONObject) -> Unit)){
+    }
 }
 
 data class DiscoveredPlayer(

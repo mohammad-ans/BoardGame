@@ -3,10 +3,14 @@ package com.example.boardgame
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings.Global.getString
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,6 +48,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private val prefs = context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
     private var isInitiator = false
     private val eglBase = EglBase.create()
+    private var stopLoading : (() -> Unit)? = null
+    private var receiveData : ((JSONObject) -> Unit)? = null
+    private var loadingText : TextView? = null
     private val peerConnectionFactory: PeerConnectionFactory by lazy {
         PeerConnectionFactory.initialize(
             PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
@@ -62,17 +69,20 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     override fun onMoveReceived(callback: (GameMove) -> Unit) {
         moveCallback = callback
     }
-    private fun ensureConnected(onOpen: ()->Unit) {
+    private var reconnectAttempts = 0
+    private val maxRecon = 5
+    private fun ensureConnected(recon : Boolean, onOpen: ()->Unit) {
         if (webSocket != null) {
             onOpen()
-            Log.e("A", "Alraedy")
             return
         }
         val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                send(JSONObject().put("username", username).put("local", playerName))
+                if (!recon)
+                    send(JSONObject().put("username", username).put("local", playerName))
+                reconnectAttempts = 0
                 onOpen()
             }
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -80,16 +90,13 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e("C", "Alraedy ${response?.message}")
-                Log.e("C", "Alraedy ${response?.request}")
-                Log.e("C", "Alraedy ${t.message}")
+                Log.e("C", " ${t.message}")
                 super.onFailure(webSocket, t, response)
                 this@OnlineGameConnection.webSocket = null
-                onError?.invoke("Websocket closed ${t.message}")
+                reconnect()
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.e("D", "Alraedy")
                 super.onClosed(webSocket, code, reason)
                 this@OnlineGameConnection.webSocket = null
                 onError?.invoke("Websocket closed $reason")
@@ -104,7 +111,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             Log.e("Online Mode", text)
             return
         }
-        Log.e("Ab", "$json")
         when(json.optString("type")) {
             "room_created" -> {
                 currentRoomCode = json.getString("room_code")
@@ -170,6 +176,20 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             "username" -> prefs.edit().putString("username2", json.getString("username")).apply()
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
+            "rejoined" -> {
+                loadingText?.text = "Reconnected, awaiting for data from the opponent"
+            }
+            "rejoined_opponent" -> {
+                loadingText?.text = "Opponent reconnected, sending data"
+                moveCallback?.invoke(GameMove("", -5))
+            }
+            "rejoin_data" -> {
+                receiveData?.invoke(json)
+                stopLoading?.invoke()
+            }
+            "stop_loading" -> {
+                stopLoading?.invoke()
+            }
         }
     }
 
@@ -179,6 +199,14 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         localAudioTrack?.setEnabled(!isMuted)
     }
     override fun startVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        }
+        speaker?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         val constraints = MediaConstraints()
         audioSource = peerConnectionFactory.createAudioSource(constraints)
         localAudioTrack = peerConnectionFactory.createAudioTrack("audio_track", audioSource)
@@ -267,7 +295,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
         }, constraints)
     }
-    private fun send(json : JSONObject) {
+    override fun send(json : JSONObject) {
         Log.e("Move", "Sending move")
         webSocket?.send(json.toString())
     }
@@ -275,8 +303,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onRoomCreated = onCreated
         this.onConnectionFailed = onFailed
         this.onMatched = onMatched
-        ensureConnected {
+        ensureConnected(false) {
             send( JSONObject().put("type", "create_room"))
+
         }
     }
     fun joinRoom(roomCode : String, onJoined: (String, Boolean) -> Unit, onFailed: (String) -> Unit) {
@@ -284,13 +313,13 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onMatched = onJoined
         this.onError = onFailed
         this.onConnectionFailed = { onError?.invoke("Could not reach server") }
-        ensureConnected { send(JSONObject().put("type", "join_room").put("room_code", roomCode)) }
+        ensureConnected(false) { send(JSONObject().put("type", "join_room").put("room_code", roomCode)) }
     }
     fun findRandomMatch(onWaiting: () -> Unit, onMatched: (String, Boolean) -> Unit, onFailed: () -> Unit) {
         this.onWaitingForMatch = onWaiting
         this.onMatched = onMatched
         this.onConnectionFailed = onFailed
-        ensureConnected {
+        ensureConnected(false) {
             send(JSONObject().put("type", "find_random_match"))
         }
     }
@@ -334,13 +363,46 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     override fun stopVoiceChat() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        val earpiece = audioManager.availableCommunicationDevices.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE
+        }
+        earpiece?.let {
+            audioManager.setCommunicationDevice(it)
+        }
         peerConnection?.close()
         peerConnection = null
         localAudioTrack = null
         audioSource = null
     }
+    private fun reconnect(){
+        if (reconnectAttempts > maxRecon) {
+            onConnectionFailed?.invoke()
+            return
+        }
+        reconnectAttempts++;
+        val delay = 1500L
+        Handler(Looper.getMainLooper()).postDelayed({
+            ensureConnected(true) {
+                if(currentRoomCode != null) {
+                    send(JSONObject().apply {
+                        put("type", "rejoin")
+                        put("room_code", currentRoomCode)
+                        put("username", playerName)
+                    })
+                }
+                else{
+                    reconnectAttempts = maxRecon
+                    onConnectionFailed?.invoke()
+                }
+            }
+        }, delay)
+
+    }
     private fun flushPendingIceCandidates() {
-//        pendingI
+        pendingIceCandidates.forEach { peerConnection?.addIceCandidate(it) }
+        pendingIceCandidates.clear()
     }
     open class SimpleSdpObserver : SdpObserver {
         override fun onCreateSuccess(sdp: SessionDescription?) {}
@@ -352,5 +414,15 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         override fun onSetFailure(error: String?) {
             Log.e("WebRTC", "Set failure: $error")
         }
+    }
+    override fun setOnStopLoading(f: (() -> Unit)) {
+        stopLoading = f
+    }
+    override fun setOnStartLoading(view : TextView) {
+        loadingText = view
+    }
+
+    override fun setOnReceiveData(f : ((JSONObject) -> Unit)){
+        receiveData = f
     }
 }

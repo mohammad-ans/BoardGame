@@ -27,11 +27,13 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import kotlinx.coroutines.Job
+import org.json.JSONObject
 
 class GameFragment : Fragment(R.layout.gamefragment) {
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
     private lateinit var gameConnection: GameConnection
-
+    lateinit var overlayLoading: ConstraintLayout
+    lateinit var loadingMsg: TextView
     lateinit var resetBtn: Button
     lateinit var resetGameOver: Button
     lateinit var gameOverText: TextView
@@ -125,10 +127,28 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player2Name = prefs?.getString("username2", "Player 2")!!
         val defaultTurn = if (isHost) 1 else 2
         player1Turn = savedInstanceState?.getInt("player1Turn") ?: defaultTurn
-
+        overlayLoading = view.findViewById<ConstraintLayout>(R.id.overlay_wait)
+        loadingMsg = overlayLoading.findViewById<TextView>(R.id.loading_msg)
         resetGameOver.setOnClickListener {
             gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
+        }
+        gameConnection.setOnStopLoading {
+            overlayLoading.visibility = View.GONE
+        }
+        gameConnection.setOnStartLoading(loadingMsg)
+        gameConnection.setOnReceiveData { json ->
+            player1Turn = json.getInt("turn")
+            player1Pos = json.getInt("player2")
+            player2Pos = json.getInt("player1")
+            if(player1Pos > 49)
+                winner(player1Name)
+            else
+                winner(player2Name)
+            if (player2Pos != 0)
+                changePosition(player2Icon, 0, min(player2Pos - 1, 49))
+            if (player1Pos != 0)
+                changePosition(player1Icon, 0, min(player1Pos - 1, 49))
         }
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
@@ -137,12 +157,33 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 else if (move.diceVal == -2)
                     resetGame(false)
                 else if (move.diceVal == 0) {
-                    resetGameOver.text = "Go Back"
+                    resetGameOver.text = getString(R.string.go_back)
                     if(!fireworks.isRunning())
                         winner(player1Name)
                     resetGameOver.setOnClickListener {
                         findNavController().popBackStack()
                     }
+                }
+                else if(move.diceVal == -3){
+                    overlayLoading.visibility = View.VISIBLE
+                    loadingMsg.text = getString(R.string.opponent_wait)
+                }
+                else if(move.diceVal == -4){
+                    resetGameOver.text = getString(R.string.go_back)
+                    if(!fireworks.isRunning())
+                        winner(player2Name)
+                    resetGameOver.setOnClickListener {
+                        findNavController().popBackStack()
+                    }
+                }
+                else if(move.diceVal == -5){
+                    gameConnection.send(JSONObject().apply {
+                        put("type", "rejoin_data")
+                        put("player1", player1Pos)
+                        put("player2", player2Pos)
+                        put("turn", if (player1Turn == 1) 2 else 1)
+                        put("fireworks", fireworks.isRunning())
+                    })
                 }
                 else
                     diceHandler(move.diceVal)

@@ -164,74 +164,78 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
-                if (move.diceVal == -1)
-                    winner(player1Name)
-                else if (move.diceVal == -2)
-                    resetGame(false)
-                else if (move.diceVal == 0) {
-                    resetGameOver.text = getString(R.string.go_back)
-                    if(!fireworks.isRunning())
-                        winner(player1Name)
-                    resetGameOver.setOnClickListener {
-                        findNavController().popBackStack()
+
+                when (move.diceVal) {
+                    -1 -> winner(player1Name)
+                    -2 -> resetGame(false)
+                    0 -> {
+                        resetGameOver.text = getString(R.string.go_back)
+                        overlayLoading.visibility = View.GONE
+                        if (!fireworks.isRunning())
+                            winner(player1Name)
+                        resetGameOver.setOnClickListener {
+                            findNavController().popBackStack()
+                        }
                     }
-                }
-                else if(move.diceVal == -3){
-
-                    requireActivity().runOnUiThread {
-
-                        Log.e("Move", "${move.diceVal} ${overlayLoading.isVisible}")
+                    -3 -> {
                         overlayLoading.visibility = View.VISIBLE
                         overlayLoading.bringToFront()
-                        Log.e("Move", "${move.diceVal} ${overlayLoading.isVisible}")
                         loadingMsg.text = getString(R.string.opponent_wait)
                     }
-                }
-                else if(move.diceVal == -4){
-                    resetGameOver.text = getString(R.string.go_back)
-                    if(!fireworks.isRunning())
-                        winner(player2Name)
-                    resetGameOver.setOnClickListener {
-                        findNavController().popBackStack()
+                    -4 -> {
+                        resetGameOver.text = getString(R.string.go_back)
+                        if (!fireworks.isRunning())
+                            winner(player2Name)
+                        resetGameOver.setOnClickListener {
+                            findNavController().popBackStack()
+                        }
                     }
+                    -5 -> {
+                        gameConnection.send(JSONObject().apply {
+                            put("type", "rejoin_data")
+                            put("player1", player1Pos)
+                            put("player2", player2Pos)
+                            put("turn", if (player1Turn == 1) 2 else 1)
+                            put("fireworks", fireworks.isRunning())
+                        })
+                    }
+                    else -> diceHandler(move.diceVal)
                 }
-                else if(move.diceVal == -5){
-                    gameConnection.send(JSONObject().apply {
-                        put("type", "rejoin_data")
-                        put("player1", player1Pos)
-                        put("player2", player2Pos)
-                        put("turn", if (player1Turn == 1) 2 else 1)
-                        put("fireworks", fireworks.isRunning())
-                    })
-                }
-                else
-                    diceHandler(move.diceVal)
             }
         }
 
         player1Pos = savedInstanceState?.getInt("player1Pos") ?: 40
         player2Pos = savedInstanceState?.getInt("player2Pos") ?: 40
+        gameOverText = view.findViewById<TextView>(R.id.player_wins)
+        player1 = view.findViewById<TextView>(R.id.player1)
+        player2 = view.findViewById<TextView>(R.id.player2)
+        turn = view.findViewById<TextView>(R.id.player_turn)
+        player1Icon = view.findViewById<ImageView>(R.id.player1icon)
+        player2Icon = view.findViewById<ImageView>(R.id.player2icon)
+        resetBtn = view.findViewById<Button>(R.id.reset_game)
+        grid = view.findViewById<GridLayout>(R.id.grid)
+        fireworks = view.findViewById<FireworksView>(R.id.fireworks)
+        overlayGameOver = view.findViewById<ConstraintLayout>(R.id.overlay_game_over)
+        timeoutDisplay = view.findViewById<TextView>(R.id.timeout)
+        diceImg = view.findViewById<ImageView>(R.id.dice_image)
+
         val tempDice = savedInstanceState?.getInt("diceVal")
         if(tempDice == 0 || tempDice == null ){
             startTimer()
             diceVal = 1
         }
         else{
+            scheduleTimer()
             diceVal = tempDice
         }
         val fireworksRunning = savedInstanceState?.getBoolean("fireworks_running") ?: false
 
-        diceImg = view.findViewById<ImageView>(R.id.dice_image)
         if (diceVal != 1) {
             updateDiceImg(diceVal)
         }
         if (player1Turn != 1) {
             diceImg.isEnabled = false
         }
-        fireworks = view.findViewById<FireworksView>(R.id.fireworks)
-        overlayGameOver = view.findViewById<ConstraintLayout>(R.id.overlay_game_over)
-        gameOverText = view.findViewById<TextView>(R.id.player_wins)
-        timeoutDisplay = view.findViewById<TextView>(R.id.timeout)
         if (fireworksRunning) {
             diceImg.isEnabled = false
             fireworks.start()
@@ -249,14 +253,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             sizeTile = resources.displayMetrics.widthPixels / 6
             heightTile = (sizeTile * 3) / 4
         }
-
-        player1 = view.findViewById<TextView>(R.id.player1)
-        player2 = view.findViewById<TextView>(R.id.player2)
-        turn = view.findViewById<TextView>(R.id.player_turn)
-        player1Icon = view.findViewById<ImageView>(R.id.player1icon)
-        player2Icon = view.findViewById<ImageView>(R.id.player2icon)
-        resetBtn = view.findViewById<Button>(R.id.reset_game)
-        grid = view.findViewById<GridLayout>(R.id.grid)
         tiles = ArrayList()
 
         var i = 50
@@ -611,7 +607,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     private fun startTimer(){
         turnTimer?.cancel()
-        sessionViewModel.turnTimeout = System.currentTimeMillis()
+        sessionViewModel.turnTimeout = System.currentTimeMillis() + timeoutSeconds
         scheduleTimer()
     }
     private fun scheduleTimer(){
@@ -621,7 +617,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             return
         }
         else{
-            turnTimer = object : CountDownTimer(timeoutSeconds, 1000) {
+            turnTimer = object : CountDownTimer(remaining, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
                     if(view == null)
                         return
@@ -633,6 +629,18 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                         return
                     if(player1Turn == 1)
                         sendForfeitSignal()
+                    else{
+                        lifecycleScope.launch {
+                            delay(10000)
+                            val remaining = sessionViewModel.turnTimeout - System.currentTimeMillis()
+                            if (view != null && remaining <= 0) {
+                                winner(player1Name)
+                                gameConnection.send(JSONObject().apply {
+                                    put("type", "max_wait_leave")
+                                })
+                            }
+                        }
+                    }
                 }
             }.start()
         }

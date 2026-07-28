@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 
 class OnlineGameConnection(private val context: Context, private val playerName: String, private val serverUrl : String) : GameConnection {
     private var moveCallback: ((GameMove) -> Unit)? = null
-    private  val client = OkHttpClient.Builder().pingInterval(20, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()
+    private  val client = OkHttpClient.Builder().pingInterval(2, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()
     private var webSocket : WebSocket? = null
     private var isMuted = true
     private var currentRoomCode: String? = null
@@ -387,12 +387,12 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         Log.e("Reconn", "$reconnectAttempts")
 
         startLoading?.invoke()
-        if (reconnectAttempts > maxRecon) {
+        if (reconnectAttempts >= maxRecon) {
             onConnectionFailed?.invoke()
             return
         }
-        reconnectAttempts++;
-        val delay = 1500L
+        val delay = 1500L + (500L * reconnectAttempts)
+        reconnectAttempts++
         Handler(Looper.getMainLooper()).postDelayed({
             ensureConnected(true) {
                 if(currentRoomCode != null) {

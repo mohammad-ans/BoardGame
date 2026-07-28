@@ -12,7 +12,7 @@ app.add_middleware(
         allow_headers=["*"]
 )
 
-TIMEOUT_SECONDS = 120
+TIMEOUT_SECONDS = 85
 
 class ConnectionManager:
     def __init__(self):
@@ -59,7 +59,7 @@ class ConnectionManager:
         self.player_room[user1] = room_code
         self.player_room[user2] = room_code
 
-    async def remove_connection(self, user : str, room_code : str | None):
+    async def remove_connection(self, user : str, room_code : str | None, lose : bool = True):
         try:
             self.list_conn.pop(user)
             if user in self.random_waiting:
@@ -71,10 +71,11 @@ class ConnectionManager:
                     return
 
             players = self.room_players[room_code]
-            if players[0] == user and players[1] and players[1] in self.list_conn.keys():
-                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
-            elif players[0] and players[0] in self.list_conn.keys():
-                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
+            if lose:
+                if players[0] == user and players[1] and players[1] in self.list_conn.keys():
+                    await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
+                elif players[0] and players[0] in self.list_conn.keys():
+                    await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
             if players[0] in self.player_room:
                 self.player_room.pop(players[0], "")
             if players[1] in self.player_room:
@@ -87,13 +88,14 @@ class ConnectionManager:
             pass
 
     async def wait_before_disconnect(self, user : str, room_code : str):
+        room_code = self.player_room[user]
         try:
             players = self.room_players[room_code]
             if players[0] == user and players[1] and players[1] in self.list_conn.keys():
                 await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -3})
             elif players[0] and players[0] in self.list_conn.keys():
                 await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -3})
-            asyncio.sleep(10)
+            asyncio.sleep(15)
             await self.remove_connection(user, room_code)
         except asyncio.CancelledError:
             raise
@@ -205,8 +207,10 @@ async def main_websoc(user : WebSocket):
                         await user.send_json({"type" : "stop_loading"})
                     case "leave":
                         room_code = data["room_code"]
-                        await manager.remove_connection(username, room_code, data)
+                        await manager.remove_connection(username, room_code)
                         break
+                    case "max_wait_leave":
+                        await manager.remove_connection(username, None, False)
                 
     except Exception as e:
         print(e)

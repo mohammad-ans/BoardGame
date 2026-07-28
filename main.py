@@ -118,9 +118,11 @@ class ConnectionManager:
             await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : move})
 
     async def random_join(self, user : str):
-        if len(self.random_waiting) > 0:
+        self.random_waiting.add(user)
+        if len(self.random_waiting) > 1:
             turn = random.randint(0, 1)
             room_code = self.create_room()
+            self.random_waiting.discard(user)
             player = self.random_waiting.pop()
             self.random_util(user, player, room_code)
             local_name = self.player_local[user]
@@ -128,7 +130,6 @@ class ConnectionManager:
             await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : int(not turn), "is_initiator" : True})
             return turn, room_code, self.player_local[player]
         else:
-            self.random_waiting.add(user)
             return -1
 
     async def relay_to_opponent(self, room_code : str, sender : str, payload: dict):

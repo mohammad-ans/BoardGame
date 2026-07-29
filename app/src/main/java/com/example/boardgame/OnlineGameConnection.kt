@@ -100,7 +100,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 super.onClosed(webSocket, code, reason)
                 this@OnlineGameConnection.webSocket = null
-                onError?.invoke("Websocket closed $reason")
             }
         })
     }

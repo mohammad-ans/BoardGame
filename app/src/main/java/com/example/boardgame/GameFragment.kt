@@ -584,7 +584,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         gameConnection.stopVoiceChat()
         cancelTimer()
         if (isRemoving) {
-            gameConnection.sendMove(GameMove(player1Name, 0))
+            gameConnection.disconnect()
         }
         _binding = null
     }

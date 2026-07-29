@@ -61,14 +61,6 @@ class ConnectionManager:
 
     async def remove_connection(self, user : str, room_code : str | None, lose : bool = True):
         try:
-            self.list_conn.pop(user)
-            if user in self.random_waiting:
-                self.random_waiting.discard(user)
-            if not room_code:
-                if user in self.player_room.keys():
-                    room_code = self.player_room[user]
-                else:
-                    return
 
             players = self.room_players[room_code]
             if lose:
@@ -88,6 +80,14 @@ class ConnectionManager:
             pass
 
     async def wait_before_disconnect(self, user : str, room_code : str):
+        self.list_conn.pop(user)
+        if user in self.random_waiting:
+            self.random_waiting.discard(user)
+        if not room_code:
+            if user in self.player_room.keys():
+                room_code = self.player_room[user]
+            else:
+                return
         room_code = self.player_room[user]
         try:
             players = self.room_players[room_code]
@@ -143,8 +143,8 @@ class ConnectionManager:
     def rejoin(self, room_code : str, user: str):
         if room_code not in self.rooms or room_code not in self.room_players:
             return -1
-        pending_task = self.pending_disconnect.pop(user)
-        if pending_task:
+        pending_task = self.pending_disconnect.pop(user, -1)
+        if isinstance(pending_task, int):
             pending_task.cancel()
         else:
             return -1
@@ -196,15 +196,15 @@ async def main_websoc(user : WebSocket):
 
                     case "rejoin":
                         room_code = data["room_code"]
-                        status = manager.rejoin(room_code)
+                        status = manager.rejoin(room_code, username)
                         if status == -1:
                             await user.send_json({"type" : "move", "diceVal" : -4})
                         else:
                             await user.send_json({"type" : "rejoined"})
-                            await manager.relay_to_opponent(room_code, user, {"type" : "rejoined_opponent"})
+                            await manager.relay_to_opponent(room_code, username, {"type" : "rejoined_opponent"})
                     case "rejoin_data":
-                        room_code = data["room_code"]
-                        await manager.relay_to_opponent(room_code, user, )
+                        room_code = manager.player_room[username]
+                        await manager.relay_to_opponent(room_code, username, data)
                         await user.send_json({"type" : "stop_loading"})
                     case "leave":
                         room_code = data["room_code"]

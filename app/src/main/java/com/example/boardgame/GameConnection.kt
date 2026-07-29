@@ -31,6 +31,9 @@ interface GameConnection {
 
     fun setOnReceiveData(f : ((JSONObject) -> Unit)){
     }
+    fun setOnVoiceConnection(f: (() -> Unit)){
+
+    }
 }
 
 data class DiscoveredPlayer(

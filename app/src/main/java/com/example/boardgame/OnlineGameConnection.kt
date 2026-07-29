@@ -72,6 +72,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
     private var reconnectAttempts = 0
     private val maxRecon = 5
+    private var iceRestartAttempts = 0
+    private val maxIceRestarts = 3
+    private var isRestartingVoice = false
+    private var voiceConnectionLost: (() -> Unit)? = null
+    private val voiceHandler = Handler(Looper.getMainLooper())
     private fun ensureConnected(recon : Boolean, onOpen: ()->Unit) {
         if (webSocket != null) {
             onOpen()
@@ -397,6 +402,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                         put("room_code", currentRoomCode)
                         put("username", username)
                     })
+                    if (peerConnection != null)
+                        attemptVoiceRecovery(true)
                 }
                 else{
                     reconnectAttempts = maxRecon
@@ -406,6 +413,34 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         }, delay)
 
     }
+    private fun rebuildVoiceConnection() {
+        stopVoiceChat()
+        startVoiceChat()
+        isRestartingVoice = false
+    }
+
+    private fun attemptVoiceRecovery(restart: Boolean){
+        if (peerConnection == null)
+            return
+        if(isRestartingVoice)
+            return
+        if (iceRestartAttempts >= maxIceRestarts){
+            voiceConnectionLost?.invoke()
+            stopVoiceChat()
+            return
+        }
+        isRestartingVoice = true
+        iceRestartAttempts++;
+        if(restart)
+            restartVoiceConnection()
+        else
+            rebuildVoiceConnection()
+    }
+
+    override fun setOnVoiceConnection(f: () -> Unit) {
+        voiceConnectionLost = f
+    }
+
     private fun flushPendingIceCandidates() {
         pendingIceCandidates.forEach { peerConnection?.addIceCandidate(it) }
         pendingIceCandidates.clear()
@@ -431,5 +466,36 @@ class OnlineGameConnection(private val context: Context, private val playerName:
 
     override fun setOnReceiveData(f : ((JSONObject) -> Unit)){
         receiveData = f
+    }
+    private fun restartVoiceConnection() {
+        if (peerConnection == null){
+            isRestartingVoice = false
+            return
+        }
+        remoteDescriptionSet = false
+        pendingIceCandidates.clear()
+        if(!isInitiator){
+            isRestartingVoice = false
+            return
+        }
+        val constraints = MediaConstraints().apply {
+            mandatory.add(MediaConstraints.KeyValuePair("IceRestart", "true"))
+        }
+        peerConnection?.createOffer(object : SimpleSdpObserver() {
+            override fun onCreateSuccess(sdp: SessionDescription?) {
+                peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
+                send(JSONObject().apply {
+                    put("type", "voice_offer")
+                    put("room_code", currentRoomCode)
+                    put("sdp", sdp?.description)
+                })
+                isRestartingVoice = false
+            }
+
+            override fun onCreateFailure(error: String?) {
+                super.onCreateFailure(error)
+                isRestartingVoice = false
+            }
+        }, constraints)
     }
 }

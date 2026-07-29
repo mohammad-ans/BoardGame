@@ -51,7 +51,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var startLoading : (() -> Unit)? = null
     private var stopLoading : (() -> Unit)? = null
     private var receiveData : ((JSONObject) -> Unit)? = null
-    private var loadingText : TextView? = null
+    private var loadingFunc : ((String) -> Unit)? = null
     private val peerConnectionFactory: PeerConnectionFactory by lazy {
         PeerConnectionFactory.initialize(
             PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
@@ -112,6 +112,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             Log.e("Online Mode", text)
             return
         }
+        Log.e("JSON", "${json.getString("type")}")
         when(json.optString("type")) {
             "room_created" -> {
                 currentRoomCode = json.getString("room_code")
@@ -178,14 +179,10 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             "opponent_disconnected" -> onOpponentsDisconnected?.invoke()
             "error" -> onError?.invoke(json.optString("message", "Server Error"))
             "rejoined" -> {
-                Handler(Looper.getMainLooper()).post {
-                    loadingText?.text = "Reconnected, awaiting for data from the opponent"
-                }
+                loadingFunc?.invoke("Reconnected, awaiting for data from the opponent")
             }
             "rejoined_opponent" -> {
-                Handler(Looper.getMainLooper()).post {
-                    loadingText?.text = "Opponent reconnected, sending data"
-                }
+                loadingFunc?.invoke("Opponent reconnected, sending data")
                 moveCallback?.invoke(GameMove("", -5))
             }
             "rejoin_data" -> {
@@ -301,7 +298,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         }, constraints)
     }
     override fun send(json : JSONObject) {
-        Log.e("Move", "Sending move")
+        Log.e("Move", "$json  $webSocket")
         webSocket?.send(json.toString())
     }
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String, Boolean) -> Unit)  {
@@ -428,8 +425,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     override fun setOnStopLoading(f: (() -> Unit)) {
         stopLoading = f
     }
-    override fun setOnStartLoading(view : TextView, f :(() -> Unit)) {
-        loadingText = view
+    override fun setOnStartLoading(f :(() -> Unit), f2 : ((String) -> Unit)) {
+        loadingFunc = f2
         startLoading = f
     }
 

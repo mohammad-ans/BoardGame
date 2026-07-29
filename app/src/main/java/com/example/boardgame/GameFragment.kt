@@ -27,6 +27,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.example.boardgame.databinding.GamefragmentBinding
@@ -51,6 +52,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     var winningPoints = 50
     var isMuted: Boolean = true
     var prefs: SharedPreferences? = null
+    var timeOutFunc: Job? = null
+    private var remainingSeconds = 0L
     val snakes = mapOf<Int, Int>(
         49 to 38,
         47 to 36,
@@ -127,27 +130,23 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
         }
-        gameConnection.setOnStopLoading {
-
-            requireActivity().runOnUiThread {
-            binding.overlayWait.visibility = View.GONE}
-        }
-        gameConnection.setOnStartLoading(binding.loadingMsg){
-
-            requireActivity().runOnUiThread {
-            binding.overlayWait.visibility = View.VISIBLE
-            binding.overlayWait.bringToFront()
-            binding.loadingMsg.text = getString(R.string.own_wait)}
-        }
+        gameConnection.setOnStopLoading(::stopLoading)
+        gameConnection.setOnStartLoading(::startLoading, ::loadingTextChange)
         gameConnection.setOnReceiveData { json ->
-
             requireActivity().runOnUiThread {
                 player1Turn = json.getInt("turn")
+                binding.playerTurn.text = getString(R.string.player_turn_dynamic, if (player1Turn == 1) player1Name else player2Name)
                 player1Pos = json.getInt("player2")
+                binding.player1.text = getString(R.string.player_1_dynamic, player1Name, player1Pos)
                 player2Pos = json.getInt("player1")
+                binding.player2.text = getString(R.string.player_2_dynamic, player2Name, player2Pos)
+                if(player1Turn == 1)
+                    enableDice()
+                sessionViewModel.turnTimeout = json.getLong("seconds")
+                scheduleTimer()
                 if (player1Pos > 49)
                     winner(player1Name)
-                else
+                else if(player2Pos > 49)
                     winner(player2Name)
                 if (player2Pos != 0)
                     changePosition(binding.player2icon, 0, min(player2Pos - 1, 49))
@@ -157,34 +156,45 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
         gameConnection.onMoveReceived { move ->
             requireActivity().runOnUiThread {
-
+                Log.e("Move receive", "${move.diceVal}")
                 when (move.diceVal) {
-                    -1 -> winner(player1Name)
-                    -2 -> resetGame(false)
+                    -1 -> {
+                        stopLoading()
+                        goBack()
+                        winner(player1Name)
+                    }
+                    -2 ->{
+                        resetGame(false)
+                        }
                     0 -> {
-                        binding.overlayWait.visibility = View.GONE
+                        stopLoading()
                         goBack()
                         if (!binding.fireworks.isRunning())
                             winner(player1Name)
                     }
                     -3 -> {
+                        turnTimer?.cancel()
                         binding.overlayWait.visibility = View.VISIBLE
                         binding.overlayWait.bringToFront()
                         binding.loadingMsg.text = getString(R.string.opponent_wait)
                     }
                     -4 -> {
+                        stopLoading()
                         goBack()
                         if (!binding.fireworks.isRunning())
                             winner(player2Name)
                     }
                     -5 -> {
-                        gameConnection.send(JSONObject().apply {
+                        sessionViewModel.turnTimeout += 4000L
+                        val sendData = JSONObject().apply {
                             put("type", "rejoin_data")
                             put("player1", player1Pos)
                             put("player2", player2Pos)
                             put("turn", if (player1Turn == 1) 2 else 1)
-                            put("fireworks", binding.fireworks.isRunning())
-                        })
+                            put("seconds", sessionViewModel.turnTimeout - 2000L)
+                        }
+                        gameConnection.send(sendData)
+                        scheduleTimer()
                     }
                     else -> diceHandler(move.diceVal)
                 }
@@ -301,6 +311,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
 
     fun winner(playerName: String) {
+        if(timeOutFunc != null)
+            timeOutFunc?.cancel()
         binding.playerWins.text = getString(R.string.player_wins, playerName)
         binding.overlayGameOver.visibility = View.VISIBLE
         binding.playerTurn.text = getString(R.string.game_over)
@@ -325,6 +337,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     suspend fun applyMove(diceVal: Int) {
 
         updateDiceImg(diceVal)
+        if(timeOutFunc != null)
+            timeOutFunc?.cancel()
 
         if (player1Turn == 1) {
             cancelTimer()
@@ -481,6 +495,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     fun sendForfeitSignal() {
         gameConnection.sendMove(GameMove(player1Name, -1))
+        goBack()
         winner(player2Name)
     }
 
@@ -570,8 +585,8 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         cancelTimer()
         if (isRemoving) {
             gameConnection.sendMove(GameMove(player1Name, 0))
-            gameConnection.disconnect()
         }
+        _binding = null
     }
 
     fun getCurrentName(): String {
@@ -585,7 +600,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     }
     private fun scheduleTimer(){
         val remaining = sessionViewModel.turnTimeout - System.currentTimeMillis()
-        if (remaining <= 0){
+        if (remaining <= 0L){
             sendForfeitSignal()
             return
         }
@@ -603,10 +618,11 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     if(player1Turn == 1)
                         sendForfeitSignal()
                     else{
-                        lifecycleScope.launch {
+                        timeOutFunc = lifecycleScope.launch {
                             delay(10000)
                             val remaining = sessionViewModel.turnTimeout - System.currentTimeMillis()
                             if (view != null && remaining <= 0) {
+                                goBack()
                                 winner(player1Name)
                                 gameConnection.send(JSONObject().apply {
                                     put("type", "max_wait_leave")
@@ -625,6 +641,24 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         binding.resetGameOverlay.text = getString(R.string.go_back)
         binding.resetGameOverlay.setOnClickListener {
             findNavController().popBackStack()
+        }
+    }
+    fun loadingTextChange(text : String){
+        requireActivity().runOnUiThread {
+            binding.loadingMsg.text = text
+        }
+    }
+    fun startLoading() {
+        requireActivity().runOnUiThread {
+            turnTimer?.cancel()
+            binding.overlayWait.visibility = View.VISIBLE
+            binding.overlayWait.bringToFront()
+            binding.loadingMsg.text = getString(R.string.own_wait)
+        }
+    }
+    fun stopLoading(){
+        requireActivity().runOnUiThread {
+            binding.overlayWait.visibility = View.GONE
         }
     }
 

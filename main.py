@@ -216,6 +216,8 @@ async def main_websoc(user : WebSocket):
                         break
                     case "game_over":
                         room_code = data["room_code"]
+                        if room_code not in manager.rooms:
+                            return
                         winner_name = data["winner"]
                         players = manager.room_players[room_code]
                         if players:

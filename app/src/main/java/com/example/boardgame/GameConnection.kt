@@ -20,7 +20,7 @@ interface GameConnection {
     fun startVoiceChat() {}
     fun stopVoiceChat() {}
     fun setMuted(muted: Boolean) {}
-    fun send(json : JSONObject) {}
+    fun send(json : JSONObject, put: Boolean = false) {}
 
 
     fun setOnStopLoading(f: (() -> Unit)) {

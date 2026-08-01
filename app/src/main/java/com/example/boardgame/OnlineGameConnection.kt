@@ -89,6 +89,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 Log.e("Open", "open")
                 send(JSONObject().put("username", username).put("local", playerName))
                 reconnectAttempts = 0
+                iceRestartAttempts = 0
                 onOpen()
             }
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -116,7 +117,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             Log.e("Online Mode", text)
             return
         }
-        Log.e("JSON", "${json.getString("type")}")
+        Log.e("JSON", "${json}")
         when(json.optString("type")) {
             "room_created" -> {
                 currentRoomCode = json.getString("room_code")
@@ -132,14 +133,12 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
             "player_joined" -> {
                 onMatched?.invoke(currentRoomCode!!, true)
-//                isInitiator = json.getBoolean("is_initiator")
                 isInitiator = true
             }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
                     onMatched?.invoke(currentRoomCode!!, false)
-//                    isInitiator = json.getBoolean("is_initiator")
                     isInitiator = false
                 }
                 else
@@ -222,7 +221,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             override fun onIceCandidate(candidate: IceCandidate?) {
                 send(JSONObject().apply {
                     put("type", "voice_ice_candidate")
-                    put("room_code", currentRoomCode)
                     put("candidate", candidate?.sdp)
                     put("sdpMid", candidate?.sdpMid)
                     put("sdpMLineIndex", candidate?.sdpMLineIndex)
@@ -282,7 +280,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
                 send(JSONObject().apply {
                     put("type", "voice_offer")
-                    put("room_code", currentRoomCode)
                     put("sdp", sdp?.description)
                 })
             }
@@ -295,14 +292,15 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
                 send(JSONObject().apply {
                     put("type", "voice_answer")
-                    put("room_code", currentRoomCode)
                     put("sdp", sdp?.description)
                 })
             }
         }, constraints)
     }
-    override fun send(json : JSONObject) {
+    override fun send(json : JSONObject, put: Boolean) {
         Log.e("Move", "$json  $webSocket")
+        if(put)
+            json.put("room_code", currentRoomCode!!)
         webSocket?.send(json.toString())
     }
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String, Boolean) -> Unit)  {
@@ -320,7 +318,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         this.onMatched = onJoined
         this.onError = onFailed
         this.onConnectionFailed = { onError?.invoke("Could not reach server") }
-        ensureConnected(false) { send(JSONObject().put("type", "join_room").put("room_code", roomCode)) }
+        ensureConnected(false) { send(JSONObject().put("type", "join_room"), true) }
     }
     fun findRandomMatch(onWaiting: () -> Unit, onMatched: (String, Boolean) -> Unit, onFailed: () -> Unit) {
         this.onWaitingForMatch = onWaiting
@@ -336,11 +334,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
 
     override fun sendMove(move: GameMove) {
-        send(JSONObject().put("type", "move").put("dice_val", move.diceVal).put("room_code", currentRoomCode!!))
+        send(JSONObject().put("type", "move").put("dice_val", move.diceVal), true)
     }
 
     override fun disconnect() {
-        send(JSONObject().put("type", "leave").put("room_code", currentRoomCode))
+        send(JSONObject().put("type", "leave"), true)
         webSocket?.close(1000, "Player left")
         webSocket = null
         currentRoomCode = null
@@ -350,25 +348,17 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         endpointId: String,
         onOpponentConnected: () -> Unit,
         onRejected: () -> Unit
-    ) {
+    ) {}
 
-    }
+    override fun respondToRequest(endpointId: String, accept: Boolean) {}
 
-    override fun respondToRequest(endpointId: String, accept: Boolean) {
-        TODO("Not yet implemented")
-    }
-
-    override fun startDiscovery(onEndpointsUpdated: (List<DiscoveredPlayer>) -> Unit) {
-        TODO("Not yet implemented")
-    }
+    override fun startDiscovery(onEndpointsUpdated: (List<DiscoveredPlayer>) -> Unit) {}
 
     override fun startHosting(
         onIncomingRequest: (IncomingRequest) -> Unit,
         onOpponentConnected: () -> Unit,
         onOpponentDisconnected: () -> Unit
-    ) {
-        TODO("Not yet implemented")
-    }
+    ) {}
 
     override fun stopVoiceChat() {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -401,9 +391,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                         put("type", "rejoin")
                         put("room_code", currentRoomCode)
                         put("username", username)
-                    })
-                    if (peerConnection != null)
-                        attemptVoiceRecovery(true)
+                    }, true)
                 }
                 else{
                     reconnectAttempts = maxRecon

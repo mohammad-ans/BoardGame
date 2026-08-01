@@ -162,6 +162,12 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                         stopLoading()
                         goBack()
                         winner(player1Name)
+                        gameConnection.send(
+                            JSONObject().apply {
+                                put("type", "game_over")
+                            }, true
+                        )
+
                     }
                     -2 ->{
                         resetGame(false)
@@ -169,8 +175,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     0 -> {
                         stopLoading()
                         goBack()
-                        if (!binding.fireworks.isRunning())
+                        if (!binding.fireworks.isRunning()) {
                             winner(player1Name)
+                            gameConnection.send(
+                                JSONObject().apply {
+                                    put("type", "game_over")
+                                }, true
+                            )
+                        }
                     }
                     -3 -> {
                         turnTimer?.cancel()
@@ -181,8 +193,14 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     -4 -> {
                         stopLoading()
                         goBack()
-                        if (!binding.fireworks.isRunning())
+                        if (!binding.fireworks.isRunning()) {
                             winner(player2Name)
+                            gameConnection.send(
+                                JSONObject().apply {
+                                    put("type", "game_over")
+                                }, true
+                            )
+                        }
                     }
                     -5 -> {
                         sessionViewModel.turnTimeout += 4000L
@@ -193,7 +211,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                             put("turn", if (player1Turn == 1) 2 else 1)
                             put("seconds", sessionViewModel.turnTimeout - 2000L)
                         }
-                        gameConnection.send(sendData)
+                        gameConnection.send(sendData, true)
                         scheduleTimer()
                     }
                     else -> diceHandler(move.diceVal)
@@ -626,7 +644,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                                 winner(player1Name)
                                 gameConnection.send(JSONObject().apply {
                                     put("type", "max_wait_leave")
-                                })
+                                }, true)
                             }
                         }
                     }

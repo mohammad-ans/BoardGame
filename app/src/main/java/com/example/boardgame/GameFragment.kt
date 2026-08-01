@@ -47,6 +47,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     private var _binding: GamefragmentBinding? = null
     private val binding get() = _binding!!
     lateinit var animationLaunch: Job
+    lateinit var unqiueUid: String
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
@@ -130,6 +131,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
         }
+        unqiueUid = prefs?.getString("uuid", null)!!
         gameConnection.setOnStopLoading(::stopLoading)
         gameConnection.setOnStartLoading(::startLoading, ::loadingTextChange)
         gameConnection.setOnReceiveData { json ->
@@ -144,8 +146,16 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     enableDice()
                 sessionViewModel.turnTimeout = json.getLong("seconds")
                 scheduleTimer()
-                if (player1Pos > 49)
+                if (player1Pos > 49) {
+                    if(!binding.fireworks.isRunning())
+                        gameConnection.send(
+                            JSONObject().apply {
+                                put("type", "game_over")
+                                put("winner", unqiueUid)
+                            }, true
+                        )
                     winner(player1Name)
+                }
                 else if(player2Pos > 49)
                     winner(player2Name)
                 if (player2Pos != 0)
@@ -165,6 +175,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                         gameConnection.send(
                             JSONObject().apply {
                                 put("type", "game_over")
+                                put("winner", unqiueUid)
                             }, true
                         )
 
@@ -180,6 +191,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                             gameConnection.send(
                                 JSONObject().apply {
                                     put("type", "game_over")
+                                    put("winner", unqiueUid)
                                 }, true
                             )
                         }
@@ -193,13 +205,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                     -4 -> {
                         stopLoading()
                         goBack()
+                        stopLoading()
                         if (!binding.fireworks.isRunning()) {
                             winner(player2Name)
-                            gameConnection.send(
-                                JSONObject().apply {
-                                    put("type", "game_over")
-                                }, true
-                            )
                         }
                     }
                     -5 -> {
@@ -394,6 +402,12 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 resetTiles()
                 tiles[49].setBackgroundColor(Color.BLUE)
                 winner(player1Name)
+                gameConnection.send(
+                    JSONObject().apply {
+                        put("type", "game_over")
+                        put("winner", unqiueUid)
+                    }, true
+                )
                 return
             }
             animationLaunch.join()
@@ -641,10 +655,17 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                             val remaining = sessionViewModel.turnTimeout - System.currentTimeMillis()
                             if (view != null && remaining <= 0) {
                                 goBack()
+                                stopLoading()
                                 winner(player1Name)
                                 gameConnection.send(JSONObject().apply {
                                     put("type", "max_wait_leave")
                                 }, true)
+                                gameConnection.send(
+                                    JSONObject().apply {
+                                        put("type", "game_over")
+                                        put("winner", unqiueUid)
+                                    }, true
+                                )
                             }
                         }
                     }

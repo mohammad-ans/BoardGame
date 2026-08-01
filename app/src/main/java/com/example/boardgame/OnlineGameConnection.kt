@@ -46,6 +46,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var onError: ((String) -> Unit)? = null
     private var onConnectionFailed : (() -> Unit)? = null
     private val prefs = context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+    val username = prefs.getString("uuid", null)!!
     private var isInitiator = false
     private val eglBase = EglBase.create()
     private var startLoading : (() -> Unit)? = null
@@ -63,8 +64,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var audioSource: AudioSource? = null
 
     private val iceServers = listOf(PeerConnection.IceServer.builder("stun:stun.l.google.com").createIceServer() )
-    @OptIn(ExperimentalUuidApi::class)
-    private val username = Uuid.random().toString()
     private val pendingIceCandidates = mutableListOf<IceCandidate>()
     private var remoteDescriptionSet = false
     override fun onMoveReceived(callback: (GameMove) -> Unit) {

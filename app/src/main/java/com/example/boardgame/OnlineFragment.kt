@@ -9,14 +9,16 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.compose.ui.graphics.Color
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
+import kotlinx.coroutines.launch
 
-class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
+class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
     private val sessionViewModel: GameSessionViewModel by navGraphViewModels(R.id.nav_graph)
-    private lateinit var connection: OnlineGameConnection
 
     private val serverUrl = "wss://yappyyap.xyz:443/ws"
     private lateinit var status: TextView
@@ -44,36 +46,37 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-        val username = prefs?.getString("username", "Player 2")
-        connection = OnlineGameConnection(requireContext(), username!!, serverUrl)
 
-        mainLayout = view.findViewById<LinearLayout>(R.id.online_main)
+        if (sessionViewModel.onlineConnection == null) {
+            val username = prefs?.getString("username", "Player 2")
+            sessionViewModel.onlineConnection =
+                OnlineGameConnection(requireContext(), username!!, serverUrl)
+        }
+
+        mainLayout = view.findViewById(R.id.online_main)
         currentLayout = mainLayout
-        roomLayout = view.findViewById<LinearLayout>(R.id.online_room)
-        joinLayout = view.findViewById<LinearLayout>(R.id.online_room_join)
-        hostLayout = view.findViewById<LinearLayout>(R.id.online_room_host)
+        roomLayout = view.findViewById(R.id.online_room)
+        joinLayout = view.findViewById(R.id.online_room_join)
+        hostLayout = view.findViewById(R.id.online_room_host)
 
-        backBtn = view.findViewById<Button>(R.id.backBtnMain)
-        status = view.findViewById<TextView>(R.id.overall_status)
-        progress = view.findViewById<ProgressBar>(R.id.onlineProgressSearching)
-        randomMatch = view.findViewById<Button>(R.id.onlineBtnRandom)
-        roomBtn = view.findViewById<Button>(R.id.onlineRoom)
+        backBtn = view.findViewById(R.id.backBtnMain)
+        status = view.findViewById(R.id.overall_status)
+        progress = view.findViewById(R.id.onlineProgressSearching)
+        randomMatch = view.findViewById(R.id.onlineBtnRandom)
+        roomBtn = view.findViewById(R.id.onlineRoom)
 
-        goToJoin = view.findViewById<Button>(R.id.onlineBtnJoin)
-        joinBtn = view.findViewById<Button>(R.id.onlineRoomJoin)
-        hostBtn = view.findViewById<Button>(R.id.onlineBtnHost)
+        goToJoin = view.findViewById(R.id.onlineBtnJoin)
+        joinBtn = view.findViewById(R.id.onlineRoomJoin)
+        hostBtn = view.findViewById(R.id.onlineBtnHost)
 
-        codeArea = view.findViewById<EditText>(R.id.room_code_input)
-        statusJoin = view.findViewById<TextView>(R.id.join_friendly_room_status)
-        statusHost = view.findViewById<TextView>(R.id.status_host)
-        progressHost = view.findViewById<ProgressBar>(R.id.onlineProgressHost)
-        roomCodeT = view.findViewById<TextView>(R.id.room_code)
+        codeArea = view.findViewById(R.id.room_code_input)
+        statusJoin = view.findViewById(R.id.join_friendly_room_status)
+        statusHost = view.findViewById(R.id.status_host)
+        progressHost = view.findViewById(R.id.onlineProgressHost)
+        roomCodeT = view.findViewById(R.id.room_code)
 
         joinBtn.setOnClickListener { onJoinLis() }
-
-        hostBtn.setOnClickListener {
-            onCreateRoomLis()
-        }
+        hostBtn.setOnClickListener { onCreateRoomLis() }
         roomBtn.setOnClickListener {
             roomLayout.visibility = View.VISIBLE
             backStack.add(mainLayout)
@@ -88,10 +91,10 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
             roomLayout.visibility = View.GONE
         }
         backBtn.setOnClickListener {
-            if(backStack.isEmpty()){
+            sessionViewModel.resetOnlineState()
+            if (backStack.isEmpty()) {
                 findNavController().popBackStack()
-            }
-            else{
+            } else {
                 val tempLayout = backStack.removeAt(backStack.lastIndex)
                 tempLayout.visibility = View.VISIBLE
                 currentLayout.visibility = View.GONE
@@ -99,106 +102,119 @@ class OnlineFragment: Fragment(R.layout.online_setup_fragment) {
                 goToJoin.isEnabled = true
                 roomBtn.isEnabled = true
             }
+        }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sessionViewModel.onlineState.collect { state -> render(state) }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sessionViewModel.navigateToGame.collect { shouldNavigate ->
+                    if (shouldNavigate) {
+                        findNavController().navigate(R.id.online_to_game)
+                        sessionViewModel.consumeNavigation()
+                    }
+                }
+            }
         }
     }
-    private fun setBusy() {
-        status.setTextColor(android.graphics.Color.WHITE)
-        status.text = getString(R.string.finding_match)
-        progress.visibility = View.VISIBLE
+
+    private fun render(state: OnlineUiState) {
+        when (state) {
+            is OnlineUiState.Idle -> {
+                // Wipe every transient widget so a status/room-code/spinner
+                // left over from a previous attempt can't linger into the
+                // next one (e.g. after backing out of host/join mid-request).
+                progress.visibility = View.GONE
+                progressHost.visibility = View.GONE
+                status.text = ""
+                statusHost.text = ""
+                statusJoin.text = ""
+                roomCodeT.text = ""
+            }
+            is OnlineUiState.Connecting -> {
+                // Fires for all three flows (random match, create room, join
+                // room). Update every layout's own status/progress widgets —
+                // not just the main layout's — since createRoom()/joinRoom()
+                // already switch the visible layout before this state lands,
+                // and previously only `status`/`progress` (main layout) got
+                // updated, leaving the host/join screens blank while the
+                // request was in flight.
+                status.setTextColor(android.graphics.Color.WHITE)
+                status.text = getString(R.string.finding_match)
+                progress.visibility = View.VISIBLE
+
+                statusHost.setTextColor(android.graphics.Color.WHITE)
+                statusHost.text = getString(R.string.finding_match)
+                progressHost.visibility = View.VISIBLE
+
+                statusJoin.setTextColor(android.graphics.Color.WHITE)
+                statusJoin.text = getString(R.string.joining)
+            }
+            is OnlineUiState.Waiting -> {
+                status.setTextColor(android.graphics.Color.WHITE)
+                status.text = getString(R.string.join_wait)
+                progress.visibility = View.VISIBLE
+            }
+            is OnlineUiState.RoomCreated -> {
+                progressHost.visibility = View.VISIBLE
+                roomCodeT.text = getString(R.string.room_code, state.roomCode)
+                statusHost.setTextColor(android.graphics.Color.WHITE)
+                statusHost.text = getString(R.string.join_wait)
+            }
+            is OnlineUiState.Matched -> {}
+            is OnlineUiState.Error -> {
+                if (findNavController().currentDestination?.id != R.id.online_fragment)
+                    findNavController().popBackStack()
+                status.setTextColor(android.graphics.Color.RED)
+                status.text = state.message
+                progress.visibility = View.GONE
+                statusHost.setTextColor(android.graphics.Color.RED)
+                statusHost.text = state.message
+                statusJoin.setTextColor(android.graphics.Color.RED)
+                statusJoin.text = state.message
+                progressHost.visibility = View.GONE
+                roomBtn.isEnabled = true
+                randomMatch.isEnabled = true
+                goToJoin.isEnabled = true
+            }
+        }
     }
+
     private fun onCreateRoomLis() {
         goToJoin.isEnabled = false
         roomLayout.visibility = View.GONE
         hostLayout.visibility = View.VISIBLE
         backStack.add(roomLayout)
         currentLayout = hostLayout
-        progressHost.visibility = View.VISIBLE
-        connection.createRoom(
-            onCreated = {roomCode->
-                requireActivity().runOnUiThread {
-                    roomCodeT.text = getString(R.string.room_code, roomCode)
-                    statusHost.setTextColor(android.graphics.Color.WHITE)
-                    statusHost.text = getString(R.string.join_wait)
-                }
-            },
-            onFailed = {
-                requireActivity().runOnUiThread {
-                    if(findNavController().currentDestination?.id != R.id.online_fragment)
-                        findNavController().popBackStack()
-                    statusHost.setTextColor(android.graphics.Color.RED)
-                    statusHost.text = getString(R.string.server_error)
-                    goToJoin.isEnabled = true
-                    progressHost.visibility = View.GONE
-                }
-                       },
-            onMatched = { _, turn ->
-                onConnected(turn)
-            }
-        )
-
+        sessionViewModel.createRoom()
     }
+
     private fun onJoinLis() {
         val code = codeArea.text.toString().trim().uppercase()
-        if (code.isEmpty()){
+        if (code.isEmpty()) {
             statusJoin.setTextColor(android.graphics.Color.RED)
             statusJoin.text = getString(R.string.empty_code)
             return
         }
         statusJoin.setTextColor(android.graphics.Color.WHITE)
         statusJoin.text = getString(R.string.joining)
-        connection.joinRoom(
-            roomCode = code,
-            onJoined = {_, turn ->
-                onConnected(turn)},
-            onFailed = {message ->
-                requireActivity().runOnUiThread {
-                    if (findNavController().currentDestination?.id != R.id.online_fragment)
-                        findNavController().popBackStack()
-                    statusJoin.setTextColor(android.graphics.Color.RED)
-                    statusJoin.text = message
-                }
-            }
-        )
+        sessionViewModel.joinRoom(code)
     }
+
     private fun onRandomMatchLis() {
-        setBusy()
+        status.setTextColor(android.graphics.Color.WHITE)
+        status.text = getString(R.string.finding_match)
+        progress.visibility = View.VISIBLE
         roomBtn.isEnabled = false
         randomMatch.isEnabled = false
-        connection.findRandomMatch(
-            onWaiting = {requireActivity().runOnUiThread {
-                status.setTextColor(android.graphics.Color.WHITE)
-                status.text = getString(R.string.join_wait)
-            }},
-            onMatched = {_, turn ->
-                onConnected(turn)},
-            onFailed = {
-                requireActivity().runOnUiThread {
-                    if(findNavController().currentDestination?.id != R.id.online_fragment)
-                        findNavController().popBackStack()
-                    status.text = getString(R.string.server_error)
-                    status.setTextColor(android.graphics.Color.RED)
-                    progress.visibility = View.GONE
-                    roomBtn.isEnabled = true
-                    randomMatch.isEnabled = true
-                }
-            }
-
-        )
-    }
-    private fun onConnected(turn: Boolean) {
-        sessionViewModel.isHost = turn
-        sessionViewModel.connection = connection
-        sessionViewModel.connectionType = "online"
-        requireActivity().runOnUiThread {
-            findNavController().navigate(R.id.online_to_game)
-        }
+        sessionViewModel.findRandomMatch()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        if(isRemoving && sessionViewModel.connection == null)
-            connection.disconnect()
+        sessionViewModel.cancelTimer()
     }
-
 }

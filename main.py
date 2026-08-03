@@ -2,7 +2,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import random
 import asyncio
-from db import session, User
+from db import session, User, Base, engine
+
 app = FastAPI()
 
 app.add_middleware(
@@ -15,10 +16,13 @@ app.add_middleware(
 
 TIMEOUT_SECONDS = 85
 
+Base.metadata.create_all(bind = engine)
+
 class ConnectionManager:
     def __init__(self):
         self.rooms: set[str] = set()
         self.list_conn: dict[str, WebSocket] = {}
+        self.list_reconn: dict[str, bool] = {}
         self.random_waiting: set[str] = set()
         self.room_players: dict[str, tuple] = dict()
         self.player_room: dict[str, str] = dict()
@@ -33,7 +37,7 @@ class ConnectionManager:
         local_username = message["local"]
         self.player_local[user] = local_username
         self.list_conn[user] = conn
-        return user, False
+        return user
 
     def assign_room(self, user : str):
         room_code = self.create_room()
@@ -62,6 +66,8 @@ class ConnectionManager:
         self.player_room[user2] = room_code
 
     async def remove_connection(self, user : str, room_code : str | None, lose : bool = True):
+        self.list_conn.pop(user, None)
+        self.list_reconn.pop(user, None)
         try:
             if not room_code:
                 if user in self.player_room.keys():
@@ -99,7 +105,6 @@ class ConnectionManager:
                 await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -3})
             elif players[0] and players[0] in self.list_conn.keys():
                 await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -3})
-            print("sent")
             await asyncio.sleep(45)
             await self.remove_connection(user, room_code)
         except asyncio.CancelledError:
@@ -117,7 +122,6 @@ class ConnectionManager:
     
     async def send_data(self, room_code : str, user : str, move):
         players = self.room_players[room_code]
-        print(self.player_room, players, self.list_conn)
         if user == players[0]:
             await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : move})
         else:
@@ -147,7 +151,6 @@ class ConnectionManager:
             await self.list_conn[opponent].send_json(payload)
 
     def rejoin(self, room_code : str, user: str):
-        print(self.room_players, room_code)
         if room_code not in self.rooms or room_code not in self.room_players:
             return -1
         pending_task = self.pending_disconnect.pop(user, -1)
@@ -160,10 +163,12 @@ manager =  ConnectionManager()
 
 @app.websocket("/ws")
 async def main_websoc(user : WebSocket):
-    username, reconn = await manager.add_connection(user)
+    username = await manager.add_connection(user)
     try:
         while True:
             data = await asyncio.wait_for(user.receive_json(), timeout=TIMEOUT_SECONDS)
+            if data["type"] != "rejoin" or data["type"].startswith("voice"):
+                manager.list_reconn[username] = False
             if "type" in data:
                 match data["type"]:
                     case "create_room":
@@ -202,6 +207,11 @@ async def main_websoc(user : WebSocket):
 
                     case "rejoin":
                         room_code = data["room_code"]
+                        if not manager.list_reconn.get(username, False):
+                            manager.list_reconn[username] = True
+                            asyncio.sleep(1)
+                            task = asyncio.create_task(manager.wait_before_disconnect(username, room_code))
+                            manager.pending_disconnect[username] = task
                         status = manager.rejoin(room_code, username)
                         if status == -1:
                             await user.send_json({"type" : "move", "diceVal" : -4})
@@ -210,11 +220,6 @@ async def main_websoc(user : WebSocket):
                             await manager.relay_to_opponent(room_code, username, {"type" : "rejoined_opponent"})
                     case "rejoin_data":
                         room_code = manager.player_room[username]
-                        if not reconn:
-                            reconn = True
-                            task = asyncio.create_task(manager.wait_before_disconnect(username, room_code))
-                            manager.pending_disconnect[username] = task
-
                         await manager.relay_to_opponent(room_code, username, data)
                         await user.send_json({"type" : "stop_loading"})
                     case "leave":
@@ -222,26 +227,25 @@ async def main_websoc(user : WebSocket):
                         await manager.remove_connection(username, room_code)
                         break
                     case "game_over":
-                        pass
-                        # room_code = data["room_code"]
-                        # if room_code not in manager.rooms:
-                        #     return
-                        # winner_name = data["winner"]
-                        # players = manager.room_players[room_code]
-                        # if players:
-                        #     loser_name = players[1] if players[0] == winner_name else players[0]
-                        #     try:
-                        #         db = session()
-                        #         record_result(db, winner_name, loser_name)
-                        #     finally:
-                        #         db.close()
+                        room_code = data["room_code"]
+                        if room_code not in manager.rooms:
+                            return
+                        winner_name = data["winner"]
+                        players = manager.room_players[room_code]
+                        if players:
+                            loser_name = players[1] if players[0] == winner_name else players[0]
+                            try:
+                                db = session()
+                                record_result(db, winner_name, loser_name)
+                            finally:
+                                db.close()
                     case "max_wait_leave":
                         await manager.remove_connection(username, None, False)
     except:
-        print("hi")
+        pass
     finally:
-        if not reconn:
-            reconn = True
+        if not manager.list_reconn.get(username, False):
+            manager.list_reconn[username] = True
             task = asyncio.create_task(manager.wait_before_disconnect(username, None))
             manager.pending_disconnect[username] = task
 
@@ -252,7 +256,16 @@ def record_result(db, winner_name: str | None, loser_name: str | None):
             continue
         user = db.query(User).filter(User.username == player_name).first()
         if not user:
-            continue
+            local = "username"
+            if manager.player_local[player_name]:
+                local = manager.player_local[player_name]
+            user = User(
+                id=player_name,
+                username=player_name,
+                local_name=local
+            )
+            db.add(user)
+            db.flush()
         if is_winner:
             user.wins += 1
         else:

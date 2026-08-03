@@ -237,7 +237,11 @@ async def main_websoc(user : WebSocket):
                             try:
                                 db = session()
                                 record_result(db, winner_name, loser_name)
+                                
+                            except Exception as e:
+                                print(e)
                             finally:
+                                print(winner_name, loser_name)
                                 db.close()
                     case "max_wait_leave":
                         await manager.remove_connection(username, None, False)
@@ -284,6 +288,8 @@ def user_data(player_name: str):
             "wins" : user.wins,
             "losses" : user.losses
         }
+    except Exception as e:
+        print(e)
     finally:
         db.close()
 

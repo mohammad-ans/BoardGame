@@ -47,7 +47,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     private var _binding: GamefragmentBinding? = null
     private val binding get() = _binding!!
     lateinit var animationLaunch: Job
-    lateinit var unqiueUid: String
+    lateinit var uniqueUid: String
     var player1Pos = 0
     var player2Pos = 0
     var winningPoints = 50
@@ -131,7 +131,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
         }
-        unqiueUid = prefs?.getString("uuid", null)!!
+        uniqueUid = prefs?.getString("uuid", null)!!
         gameConnection.setOnStopLoading(::stopLoading)
         gameConnection.setOnStartLoading(::startLoading, ::loadingTextChange)
         gameConnection.setOnReceiveData { json ->
@@ -151,7 +151,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                         gameConnection.send(
                             JSONObject().apply {
                                 put("type", "game_over")
-                                put("winner", unqiueUid)
+                                put("winner", uniqueUid)
                             }, true
                         )
                     winner(player1Name)
@@ -175,7 +175,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                         gameConnection.send(
                             JSONObject().apply {
                                 put("type", "game_over")
-                                put("winner", unqiueUid)
+                                put("winner", uniqueUid)
                             }, true
                         )
 
@@ -191,7 +191,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                             gameConnection.send(
                                 JSONObject().apply {
                                     put("type", "game_over")
-                                    put("winner", unqiueUid)
+                                    put("winner", uniqueUid)
                                 }, true
                             )
                         }
@@ -405,7 +405,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 gameConnection.send(
                     JSONObject().apply {
                         put("type", "game_over")
-                        put("winner", unqiueUid)
+                        put("winner", uniqueUid)
                     }, true
                 )
                 return
@@ -663,7 +663,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                                 gameConnection.send(
                                     JSONObject().apply {
                                         put("type", "game_over")
-                                        put("winner", unqiueUid)
+                                        put("winner", uniqueUid)
                                     }, true
                                 )
                             }

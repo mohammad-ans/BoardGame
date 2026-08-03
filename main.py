@@ -14,7 +14,7 @@ app.add_middleware(
         allow_headers=["*"]
 )
 
-TIMEOUT_SECONDS = 85
+TIMEOUT_SECONDS = 200
 
 Base.metadata.create_all(bind = engine)
 
@@ -70,15 +70,15 @@ class ConnectionManager:
         self.list_reconn.pop(user, None)
         try:
             if not room_code:
-                if user in self.player_room.keys():
+                if user in self.player_room:
                     room_code = self.player_room[user]
                 else:
                     return
             players = self.room_players[room_code]
             if lose:
-                if players[0] == user and players[1] and players[1] in self.list_conn.keys():
+                if players[0] == user and players[1] and players[1] in self.list_conn:
                     await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
-                elif players[0] and players[0] in self.list_conn.keys():
+                elif players[0] and players[0] in self.list_conn:
                     await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
             if players[0] in self.player_room:
                 self.player_room.pop(players[0], "")
@@ -225,6 +225,7 @@ async def main_websoc(user : WebSocket):
                     case "leave":
                         room_code = data["room_code"]
                         await manager.remove_connection(username, room_code)
+                        manager.list_reconn[username] = True
                         break
                     case "game_over":
                         room_code = data["room_code"]

@@ -47,7 +47,7 @@ class LeaderboardAdapter(context: Context, private val entries: List<ProfileResu
         val entry = entries[position]
         view.findViewById<TextView>(R.id.rank).text = (position + 1).toString()
         view.findViewById<TextView>(R.id.player_name).text = entry.localName
-        view.findViewById<TextView>(R.id.wins).text = entry.wins.toString()
+        view.findViewById<TextView>(R.id.wins).text = "${entry.wins}"
         return view
     }
 }

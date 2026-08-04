@@ -13,8 +13,7 @@ class Api(private val baseUrl: String) {
     private val client = OkHttpClient()
 
     fun fetchProfile(username: String, onResult: (ProfileResult?) -> Unit, onError: (String) -> Unit) {
-//        val request = Request.Builder().url("$baseUrl/profile/$username").build()
-        val request = Request.Builder().url("http://10.0.2.2:8000/profile/$username").build()
+        val request = Request.Builder().url("$baseUrl/profile/$username").build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onError(e.message ?: "Check your network")
@@ -59,7 +58,7 @@ class Api(private val baseUrl: String) {
                         val json = JSONArray(body)
                         val entries = (0 until json.length()).map {
                             val obj = json.getJSONObject(it)
-                            ProfileResult(localName = obj.getString("lcoal_name"), wins=obj.getInt("wins"), losses = obj.getInt("losses"))
+                            ProfileResult(localName = obj.getString("local_name"), wins=obj.getInt("wins"), losses = obj.getInt("losses"))
                         }
                         onResult(entries)
                     }

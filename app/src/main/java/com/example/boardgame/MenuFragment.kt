@@ -10,6 +10,8 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var usernameInput: EditText
@@ -28,6 +30,7 @@ class MenuFragment : Fragment(R.layout.menu) {
         usernameCancel = view.findViewById<Button>(R.id.username_cancel_btn)
         editUsernameButton = view.findViewById<Button>(R.id.edit_username_btn)
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+        ensureUniqueId()
         usernameValue = view.findViewById<TextView>(R.id.username_value)
         usernameInitial = view.findViewById<TextView>(R.id.username_initial)
 
@@ -69,5 +72,13 @@ class MenuFragment : Fragment(R.layout.menu) {
             return "Username"
         }
         return username
+    }
+    private fun ensureUniqueId() {
+        val username = prefs?.getString("uuid", null)
+        if(username == null){
+            @OptIn(ExperimentalUuidApi::class)
+            val temp = Uuid.random().toString()
+            prefs?.edit()?.putString("uuid", temp)?.apply()
+        }
     }
 }

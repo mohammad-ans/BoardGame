@@ -20,16 +20,19 @@ interface GameConnection {
     fun startVoiceChat() {}
     fun stopVoiceChat() {}
     fun setMuted(muted: Boolean) {}
-    fun send(json : JSONObject) {}
+    fun send(json : JSONObject, put: Boolean = false) {}
 
 
     fun setOnStopLoading(f: (() -> Unit)) {
     }
-    fun setOnStartLoading(view : TextView, f : (() -> Unit)) {
+    fun setOnStartLoading(f : (() -> Unit), f2: ((String) -> Unit) ) {
     }
 
 
     fun setOnReceiveData(f : ((JSONObject) -> Unit)){
+    }
+    fun setOnVoiceConnection(f: (() -> Unit)){
+
     }
 }
 

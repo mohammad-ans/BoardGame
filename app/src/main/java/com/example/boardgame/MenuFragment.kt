@@ -22,6 +22,7 @@ class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var usernameValue : TextView
     private lateinit var usernameInitial : TextView
     private lateinit var goProfile: TextView
+    private lateinit var leaderboard: TextView
     var prefs : SharedPreferences? = null
 
     override fun onViewCreated(view : View, savedInstanceState : Bundle?) {
@@ -35,6 +36,7 @@ class MenuFragment : Fragment(R.layout.menu) {
         ensureUniqueId()
         usernameValue = view.findViewById<TextView>(R.id.username_value)
         usernameInitial = view.findViewById<TextView>(R.id.username_initial)
+        leaderboard = view.findViewById<TextView>(R.id.leaderboard)
 
         val username = getUsername()
         usernameInitial.text = getString(R.string.username_initial, username[0])
@@ -68,6 +70,9 @@ class MenuFragment : Fragment(R.layout.menu) {
         }
         view.findViewById<Button>(R.id.nearby_mode).setOnClickListener {
             findNavController().navigate(R.id.mode_to_friendly_loading)
+        }
+        leaderboard.setOnClickListener {
+            findNavController().navigate(R.id.mode_to_leaderboard)
         }
     }
     private fun getUsername() : String{

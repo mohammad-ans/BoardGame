@@ -299,8 +299,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     }
     override fun send(json : JSONObject, put: Boolean) {
         Log.e("Move", "$json  $webSocket")
-        if(put)
-            json.put("room_code", currentRoomCode!!)
+        if(put){
+            if(currentRoomCode == null)
+                return
+            json.put("room_code", currentRoomCode)
+            }
         webSocket?.send(json.toString())
     }
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String, Boolean) -> Unit)  {

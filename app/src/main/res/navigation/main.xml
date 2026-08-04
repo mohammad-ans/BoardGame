@@ -20,6 +20,10 @@
     <action
         android:id="@+id/mode_to_profile"
         app:destination="@id/profile_fragment"/>
+
+    <action
+        android:id="@+id/mode_to_leaderboard"
+        app:destination="@id/leaderboard_fragment"/>
 </fragment>
     <fragment
         android:id="@+id/game_fragment"
@@ -66,6 +70,6 @@
     <fragment
         android:id="@+id/leaderboard_fragment"
         android:label="Leaderboard"
+        android:name="com.example.boardgame.LeaderboardFragment"
         />
-
 </navigation>

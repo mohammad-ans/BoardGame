@@ -60,4 +60,8 @@
     <string name="loss">%1$d loses</string>
     <string name="wins">%1$d wins</string>
     <string name="profile">Profile</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="no_wins">Wins</string>
+    <string name="name">Player Name</string>
+    <string name="rank">Rank</string>
 </resources>

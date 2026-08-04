@@ -37,6 +37,7 @@ class MenuFragment : Fragment(R.layout.menu) {
         ensureUniqueId()
         usernameValue = view.findViewById<TextView>(R.id.username_value)
         usernameInitial = view.findViewById<TextView>(R.id.username_initial)
+        leaderboard = view.findViewById<TextView>(R.id.leaderboard)
 
         val username = getUsername()
         usernameInitial.text = getString(R.string.username_initial, username[0])
@@ -72,7 +73,7 @@ class MenuFragment : Fragment(R.layout.menu) {
             findNavController().navigate(R.id.mode_to_friendly_loading)
         }
         leaderboard.setOnClickListener {
-
+            findNavController().navigate(R.id.mode_to_leaderboard)
         }
     }
     private fun getUsername() : String{

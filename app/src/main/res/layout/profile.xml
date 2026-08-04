@@ -28,6 +28,7 @@
         app:layout_constraintTop_toBottomOf="@id/backBtn"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="48dp"
         />
     <TextView
         android:id="@+id/profile_heading"

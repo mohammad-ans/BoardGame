@@ -21,6 +21,7 @@ class MenuFragment : Fragment(R.layout.menu) {
     private lateinit var editUsernameButton : Button
     private lateinit var usernameValue : TextView
     private lateinit var usernameInitial : TextView
+    private lateinit var goProfile: TextView
     var prefs : SharedPreferences? = null
 
     override fun onViewCreated(view : View, savedInstanceState : Bundle?) {
@@ -29,6 +30,7 @@ class MenuFragment : Fragment(R.layout.menu) {
         usernameInputArea = view.findViewById<ConstraintLayout>(R.id.username_input_area)
         usernameCancel = view.findViewById<Button>(R.id.username_cancel_btn)
         editUsernameButton = view.findViewById<Button>(R.id.edit_username_btn)
+        goProfile = view.findViewById<TextView>(R.id.go_profile)
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
         ensureUniqueId()
         usernameValue = view.findViewById<TextView>(R.id.username_value)
@@ -40,6 +42,9 @@ class MenuFragment : Fragment(R.layout.menu) {
 
         editUsernameButton.setOnClickListener {
             usernameInputArea.visibility = View.VISIBLE
+        }
+        goProfile.setOnClickListener {
+            findNavController().navigate(R.id.mode_to_profile)
         }
         usernameConfirm.setOnClickListener{
             val username = usernameInput.text.toString()

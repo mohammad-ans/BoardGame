@@ -58,8 +58,8 @@
     </fragment>
     <fragment
         android:id="@+id/profile_fragment"
+        android:label="Profile"
         android:name="com.example.boardgame.ProfileFragment"
-        android:label="Profile Fragment"
         >
 
     </fragment>

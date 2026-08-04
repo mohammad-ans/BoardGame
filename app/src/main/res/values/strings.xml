@@ -57,4 +57,7 @@
     <string name="reconnected">Reconnected, awaiting for data from the opponent</string>
     <string name="opponent_reconnect">Opponent reconnected, sending data</string>
     <string name="go_back">Go Back</string>
+    <string name="loss">%1$d loses</string>
+    <string name="wins">%1$d wins</string>
+    <string name="profile">Profile</string>
 </resources>

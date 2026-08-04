@@ -81,7 +81,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             onOpen()
             return
         }
-        val request = Request.Builder().url(serverUrl).build()
+//        val request = Request.Builder().url(serverUrl).build()
+        val request = Request.Builder().url("ws://10.0.2.2:8000/ws").build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
@@ -223,7 +224,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                     put("candidate", candidate?.sdp)
                     put("sdpMid", candidate?.sdpMid)
                     put("sdpMLineIndex", candidate?.sdpMLineIndex)
-                })
+                }, true)
             }
 
             override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
@@ -280,7 +281,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 send(JSONObject().apply {
                     put("type", "voice_offer")
                     put("sdp", sdp?.description)
-                })
+                }, true)
             }
         }, constraints)
     }
@@ -292,7 +293,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 send(JSONObject().apply {
                     put("type", "voice_answer")
                     put("sdp", sdp?.description)
-                })
+                }, true)
             }
         }, constraints)
     }
@@ -475,7 +476,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                     put("type", "voice_offer")
                     put("room_code", currentRoomCode)
                     put("sdp", sdp?.description)
-                })
+                }, true)
                 isRestartingVoice = false
             }
 

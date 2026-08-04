@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/go_profile"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/profile"
+        android:backgroundTint="@color/boxes_color"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:translationZ="2dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="16dp"
+        />
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/teal_950"
     android:orientation="vertical"
-    android:gravity="center"
     android:padding="40dp"
+    android:gravity="center"
     >
-
+        />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -226,3 +243,5 @@
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

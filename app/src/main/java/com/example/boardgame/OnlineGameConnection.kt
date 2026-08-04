@@ -77,7 +77,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var voiceConnectionLost: (() -> Unit)? = null
     private val voiceHandler = Handler(Looper.getMainLooper())
     private fun ensureConnected(recon : Boolean, onOpen: ()->Unit) {
-        if (webSocket != null) {
+        if (webSocket != null && !recon) {
             onOpen()
             return
         }

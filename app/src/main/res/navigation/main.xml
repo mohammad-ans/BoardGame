@@ -63,5 +63,9 @@
         >
 
     </fragment>
+    <fragment
+        android:id="@+id/leaderboard_fragment"
+        android:label="Leaderboard"
+        />
 
 </navigation>

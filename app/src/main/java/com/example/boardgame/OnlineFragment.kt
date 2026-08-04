@@ -3,12 +3,14 @@ package com.example.boardgame
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -124,9 +126,6 @@ class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
     private fun render(state: OnlineUiState) {
         when (state) {
             is OnlineUiState.Idle -> {
-                // Wipe every transient widget so a status/room-code/spinner
-                // left over from a previous attempt can't linger into the
-                // next one (e.g. after backing out of host/join mid-request).
                 progress.visibility = View.GONE
                 progressHost.visibility = View.GONE
                 status.text = ""
@@ -135,13 +134,6 @@ class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
                 roomCodeT.text = ""
             }
             is OnlineUiState.Connecting -> {
-                // Fires for all three flows (random match, create room, join
-                // room). Update every layout's own status/progress widgets —
-                // not just the main layout's — since createRoom()/joinRoom()
-                // already switch the visible layout before this state lands,
-                // and previously only `status`/`progress` (main layout) got
-                // updated, leaving the host/join screens blank while the
-                // request was in flight.
                 status.setTextColor(android.graphics.Color.WHITE)
                 status.text = getString(R.string.finding_match)
                 progress.visibility = View.VISIBLE
@@ -166,8 +158,9 @@ class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
             }
             is OnlineUiState.Matched -> {}
             is OnlineUiState.Error -> {
-                if (findNavController().currentDestination?.id != R.id.online_fragment)
+                if (findNavController().currentDestination?.id != R.id.online_fragment) {
                     findNavController().popBackStack()
+                }
                 status.setTextColor(android.graphics.Color.RED)
                 status.text = state.message
                 progress.visibility = View.GONE

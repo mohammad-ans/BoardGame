@@ -159,9 +159,18 @@ class GameFragment : Fragment(R.layout.gamefragment) {
                 sessionViewModel.events.collect { event -> handleEvent(event) }
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sessionViewModel.onlineState.collect { state -> render(state) }
+            }
+        }
 
     }
-
+    private fun render(state: OnlineUiState) {
+        if(state is  OnlineUiState.Error){
+            findNavController().popBackStack()
+        }
+    }
     private fun boardCreate(state: GameBoardState, animate: Boolean) {
         player1Pos = state.player1Pos
         player2Pos = state.player2Pos

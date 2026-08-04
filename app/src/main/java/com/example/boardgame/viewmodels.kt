@@ -71,7 +71,9 @@ class GameSessionViewModel: ViewModel() {
         onlineConnection?.joinRoom(
             roomCode = code,
             onJoined = { roomCode, turn -> onOnlineMatched(roomCode, turn) },
-            onFailed = { message -> _onlineState.value = OnlineUiState.Error(message) }
+            onFailed = { message ->
+                _onlineState.value = OnlineUiState.Error(message)
+            }
         )
     }
 
@@ -80,7 +82,9 @@ class GameSessionViewModel: ViewModel() {
         onlineConnection?.findRandomMatch(
             onWaiting = { _onlineState.value = OnlineUiState.Waiting },
             onMatched = { code, turn -> onOnlineMatched(code, turn) },
-            onFailed = { _onlineState.value = OnlineUiState.Error("Server error") }
+            onFailed = {
+                _onlineState.value = OnlineUiState.Error("Server error")
+            }
         )
     }
 
@@ -106,9 +110,6 @@ class GameSessionViewModel: ViewModel() {
         callbacksBound = false
     }
 
-    /** Called when the user backs out of the online setup screen so stale
-     *  status text/errors/room codes from a previous attempt don't linger
-     *  the next time they open it. */
     fun resetOnlineState() {
         _onlineState.value = OnlineUiState.Idle
     }

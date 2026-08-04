@@ -228,6 +228,22 @@ class OnlineGameConnection(private val context: Context, private val playerName:
 
             override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
                 Log.d("WebRTC", "Ice State: $state")
+                when (state) {
+                    PeerConnection.IceConnectionState.DISCONNECTED -> {
+                        voiceHandler.postDelayed({
+                            if(peerConnection?.iceConnectionState() == PeerConnection.IceConnectionState.DISCONNECTED)
+                                attemptVoiceRecovery(true)
+                        }, 3000L)
+                    }
+                    PeerConnection.IceConnectionState.FAILED -> {
+                        attemptVoiceRecovery(false)
+                    }
+                    PeerConnection.IceConnectionState.CONNECTED -> {
+                        iceRestartAttempts = 0
+                        isRestartingVoice = false
+                    }
+                    else -> {}
+                }
             }
 
             override fun onAddStream(p0: MediaStream?) {
@@ -384,7 +400,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             onConnectionFailed?.invoke()
             return
         }
-        val delay = 1500L + (500L * reconnectAttempts)
+        val delay = 1000L + (500L * reconnectAttempts)
         reconnectAttempts++
         Handler(Looper.getMainLooper()).postDelayed({
             ensureConnected(true) {
@@ -394,7 +410,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                         put("room_code", currentRoomCode)
                         put("username", username)
                     }, true)
-                    reconnectVoiceIfNeeded()
+                    if(peerConnection!= null){
+                        attemptVoiceRecovery(true)
+                    }
                 }
                 else{
                     reconnectAttempts = maxRecon
@@ -403,11 +421,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
         }, delay)
 
-    }
-    private fun reconnectVoiceIfNeeded() {
-        if (peerConnection == null)
-            return
-        rebuildVoiceConnection()
     }
     private fun rebuildVoiceConnection() {
         stopVoiceChat()

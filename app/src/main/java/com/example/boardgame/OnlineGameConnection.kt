@@ -81,8 +81,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             onOpen()
             return
         }
-//        val request = Request.Builder().url(serverUrl).build()
-        val request = Request.Builder().url("ws://10.0.2.2:8000/ws").build()
+        val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
@@ -303,7 +302,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             if(currentRoomCode == null)
                 return
             json.put("room_code", currentRoomCode)
-            }
+        }
         webSocket?.send(json.toString())
     }
     fun createRoom(onCreated : (String) -> Unit, onFailed : () -> Unit, onMatched: (String, Boolean) -> Unit)  {
@@ -395,6 +394,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                         put("room_code", currentRoomCode)
                         put("username", username)
                     }, true)
+                    reconnectVoiceIfNeeded()
                 }
                 else{
                     reconnectAttempts = maxRecon
@@ -403,6 +403,11 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
         }, delay)
 
+    }
+    private fun reconnectVoiceIfNeeded() {
+        if (peerConnection == null)
+            return
+        rebuildVoiceConnection()
     }
     private fun rebuildVoiceConnection() {
         stopVoiceChat()

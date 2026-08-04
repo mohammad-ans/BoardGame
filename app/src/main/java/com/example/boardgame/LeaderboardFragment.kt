@@ -25,7 +25,7 @@ class LeaderboardFragment: Fragment(R.layout.leaderboard) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val api = Api("https://yappyyap.xyz")
+        val api = Api("https://yappyyap.xyz:443")
         api.leaderboard(::f){
             requireActivity().runOnUiThread {
                 Toast.makeText(requireContext(), "Leaderboard load error $it", Toast.LENGTH_LONG).show()

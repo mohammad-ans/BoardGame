@@ -25,7 +25,7 @@ class ProfileFragment: Fragment(R.layout.profile) {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         prefs = requireContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-        val api = Api("https://yappyyap.xyz")
+        val api = Api("https://yappyyap.xyz:443")
         val uuid = prefs.getString("uuid", null)!!
         api.fetchProfile(username = uuid, ::f){
             requireActivity().runOnUiThread {

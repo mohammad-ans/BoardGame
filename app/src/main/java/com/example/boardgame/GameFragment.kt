@@ -462,6 +462,11 @@ class GameFragment : Fragment(R.layout.gamefragment) {
     fun resetGame(midGameReset: Boolean = false) {
         if (midGameReset)
             winner(player2Name)
+        if(!midGameReset){
+            gameConnection.send(JSONObject().apply {
+                put("type", "restart")
+            }, true)
+        }
         binding.fireworks.stop()
         binding.fireworks.visibility = View.GONE
         binding.overlayGameOver.visibility = View.GONE

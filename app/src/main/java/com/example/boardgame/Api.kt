@@ -2,6 +2,7 @@ package com.example.boardgame
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -22,7 +23,7 @@ class Api(private val baseUrl: String) {
     fun fetchProfile(username: String, onResult: (ProfileResult?) -> Unit, onError: (String) -> Unit) : Call {
         val request = Request.Builder().url("$baseUrl/profile/$username").build()
         val call = client.newCall(request)
-            call.enqueue(object : Callback {
+        call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onError(e.message ?: "Check your network")
             }
@@ -70,7 +71,9 @@ class Api(private val baseUrl: String) {
                             val obj = json.getJSONObject(it)
                             ProfileResult(localName = obj.getString("local_name"), wins=obj.getInt("wins"), losses = obj.getInt("losses"))
                         }
+                        Log.e("leaderboard", "$entries")
                         onResult(entries)
+
                     }
                     catch (e: Exception) {
                         onError("${e.message}")

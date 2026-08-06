@@ -11,6 +11,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.boardgame.databinding.LeaderboardBinding
 
 class LeaderboardFragment: Fragment(R.layout.leaderboard) {
@@ -49,7 +51,8 @@ class LeaderboardFragment: Fragment(R.layout.leaderboard) {
         if(!isAdded || binding == null)
             return
         api.postResult{
-            binding?.leaderboardLst?.adapter = LeaderboardAdapter(requireContext(), lst)
+            binding?.leaderboardLst?.layoutManager = LinearLayoutManager(requireContext())
+            binding?.leaderboardLst?.adapter = LeaderboardAdapter(lst)
         }
 
 
@@ -61,13 +64,29 @@ class LeaderboardFragment: Fragment(R.layout.leaderboard) {
         request?.cancel()
     }
 }
-class LeaderboardAdapter(context: Context, private val entries: List<ProfileResult>) : ArrayAdapter<ProfileResult>(context, 0, entries) {
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_leaderboard, parent, false)
-        val entry = entries[position]
-        view.findViewById<TextView>(R.id.rank).text = (position + 1).toString()
-        view.findViewById<TextView>(R.id.player_name).text = entry.localName
-        view.findViewById<TextView>(R.id.wins).text = "${entry.wins}"
-        return view
+class LeaderboardAdapter(
+    private val entries: List<ProfileResult>
+) : RecyclerView.Adapter<LeaderboardAdapter.ViewHolder>() {
+
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val rank: TextView = view.findViewById(R.id.rank)
+        val playerName: TextView = view.findViewById(R.id.player_name)
+        val wins: TextView = view.findViewById(R.id.wins)
     }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_leaderboard, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val entry = entries[position]
+
+        holder.rank.text = (position + 1).toString()
+        holder.playerName.text = entry.localName
+        holder.wins.text = entry.wins.toString()
+    }
+
+    override fun getItemCount(): Int = entries.size
 }

@@ -130,9 +130,10 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         binding.diceImage.setOnClickListener {
             diceRoll()
         }
-        if (!sessionViewModel.timerStarted) {
+        if (!sessionViewModel.timerStarted)
             sessionViewModel.startTurnTimer()
-        }
+        else
+            sessionViewModel.ensureTimer()
 
         boardCreate(sessionViewModel.boardState.value, false)
         viewLifecycleOwner.lifecycleScope.launch {

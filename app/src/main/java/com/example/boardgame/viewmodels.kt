@@ -274,4 +274,8 @@ class GameSessionViewModel: ViewModel() {
         grPeriodJob?.cancel()
         connection?.disconnect()
     }
+    fun ensureTimer() {
+        if(timerStarted && turnTimeout > System.currentTimeMillis())
+            runTimerLoop()
+    }
 }

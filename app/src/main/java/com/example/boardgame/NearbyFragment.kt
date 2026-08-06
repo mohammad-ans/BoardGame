@@ -241,19 +241,17 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
     private fun showAcceptDeclineDialog(request: IncomingRequest) {
         val view = layoutInflater.inflate(R.layout.incoming_request, null)
         view.findViewById<TextView>(R.id.hosting_nearby_text).text = getString(R.string.incoming_request, request.playerName)
+        val dialog = AlertDialog.Builder(requireContext()).setView(view).create()
         view.findViewById<Button>(R.id.accept).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = true)
-            view.visibility = View.GONE
+            dialog.dismiss()
         }
         view.findViewById<Button>(R.id.decline).setOnClickListener {
             connection.respondToRequest(request.endpointId, accept = false)
-            view.visibility = View.GONE
+            dialog.dismiss()
         }
         requireActivity().runOnUiThread {
-            AlertDialog.Builder(requireContext())
-                .setView(view)
-                .create()
-                .show()
+                dialog.show()
         }
     }
 

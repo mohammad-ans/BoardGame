@@ -58,9 +58,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         34 to 46, 32 to 41, 16 to 27, 11 to 28, 3 to 14
     )
 
-    // Local mirrors used only while an animation sequence is actively
-    // running in this fragment instance. Authoritative values live in
-    // sessionViewModel.boardState and are what survive rotation/backgrounding.
     private var player1Pos = 0
     private var player2Pos = 0
     private var player1Turn = 1

@@ -226,7 +226,7 @@ async def main_websoc(user : WebSocket):
                         room_code = data["room_code"]
                         if room_code not in manager.rooms:
                             return
-                        manager.room_active[room_code] = False
+                        manager.room_active[room_code] = True
 
                     case "rejoin":
                         room_code = data["room_code"]

@@ -165,7 +165,6 @@
         android:orientation="vertical"
         android:background="@color/teal_950"
         android:paddingHorizontal="24dp"
-        android:layout_marginBottom="40dp"
         android:paddingVertical="80dp"
         android:visibility="gone"
         >

@@ -37,7 +37,7 @@ data class Username(val username : String)
 
 class NearbyGameConnection(private val context: Context, private val localPlayerName: String) : GameConnection {
     private val serviceID = "com.example.boardgame"
-    private val connectionsClient = Nearby.getConnectionsClient(context)
+    val connectionsClient = Nearby.getConnectionsClient(context)
     private var connectedEndPointId: String? = null
     var moveCallback: ((GameMove) -> Unit)? = null
 

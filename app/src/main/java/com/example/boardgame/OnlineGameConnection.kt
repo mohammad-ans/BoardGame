@@ -69,7 +69,7 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     override fun onMoveReceived(callback: (GameMove) -> Unit) {
         moveCallback = callback
     }
-    private var reconnectAttempts = 0
+    var reconnectAttempts = 0
     private val maxRecon = 5
     private var iceRestartAttempts = 0
     private val maxIceRestarts = 3

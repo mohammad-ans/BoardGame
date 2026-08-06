@@ -172,6 +172,7 @@ class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
                 roomBtn.isEnabled = true
                 randomMatch.isEnabled = true
                 goToJoin.isEnabled = true
+                joinBtn.isEnabled = true
             }
         }
     }
@@ -192,6 +193,7 @@ class OnlineFragment : Fragment(R.layout.online_setup_fragment) {
             statusJoin.text = getString(R.string.empty_code)
             return
         }
+        joinBtn.isEnabled = false
         statusJoin.setTextColor(android.graphics.Color.WHITE)
         statusJoin.text = getString(R.string.joining)
         sessionViewModel.joinRoom(code)

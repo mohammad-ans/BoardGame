@@ -163,6 +163,8 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
                 tempLayout.visibility = View.VISIBLE
                 currentLayout.visibility = View.GONE
                 currentLayout = tempLayout
+                connection.connectionsClient.stopDiscovery()
+                connection.connectionsClient.stopAdvertising()
             }
         }
 
@@ -192,7 +194,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         }
     }
     private fun startHostFlow() {
-        btnHost.isEnabled = false
         hostScreen.visibility = View.VISIBLE
         currentLayout = hostScreen
         mainScreen.visibility = View.GONE
@@ -212,7 +213,6 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         )
     }
     private fun startJoinFlow() {
-        btnJoin.isEnabled = false
         joinScreen.visibility = View.VISIBLE
         currentLayout = joinScreen
         mainScreen.visibility = View.GONE

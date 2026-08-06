@@ -101,9 +101,10 @@ class GameSessionViewModel: ViewModel() {
         _navigateToGame.value = false
     }
 
-    private fun resetForNewGame() {
+    fun resetForNewGame() {
         cancelTimer()
         turnTimeout = 0L
+        timerStarted = false
         _remainingSeconds.value = 0L
         boardInitialized = false
         _boardState.value = GameBoardState()
@@ -151,7 +152,12 @@ class GameSessionViewModel: ViewModel() {
             },
             { text -> emit(GameEvent.LoadingTextChanged(text)) }
         )
-        conn.setOnStopLoading { emit(GameEvent.StopLoading) }
+        conn.setOnStopLoading {
+            emit(GameEvent.StopLoading)
+            if(timerStarted && turnTimeout > System.currentTimeMillis()){
+                runTimerLoop()
+            }
+        }
 
         conn.setOnReceiveData { json ->
             val newTurn = json.getInt("turn")
@@ -167,6 +173,7 @@ class GameSessionViewModel: ViewModel() {
             }
             turnTimeout = json.getLong("seconds")
             runTimerLoop()
+            timerStarted = true
             emit(GameEvent.RejoinData(json))
         }
 
@@ -180,15 +187,20 @@ class GameSessionViewModel: ViewModel() {
     private val _remainingSeconds = MutableStateFlow(0L)
     val remainingSeconds: StateFlow<Long> = _remainingSeconds.asStateFlow()
 
+    var timerStarted: Boolean = false
+        private set
+
     private var timerJob: Job? = null
     private var grPeriodJob: Job? = null
 
     fun startTurnTimer(durationMs: Long = 30_000L) {
         turnTimeout = System.currentTimeMillis() + durationMs
+        timerStarted = true
         runTimerLoop()
     }
 
     fun scheduleTimerFromCurrentTimeout() {
+        timerStarted = true
         runTimerLoop()
     }
 
@@ -252,6 +264,7 @@ class GameSessionViewModel: ViewModel() {
                 put("seconds", turnTimeout - 2000L)
             }, true
         )
+        timerStarted = true
         runTimerLoop()
     }
 

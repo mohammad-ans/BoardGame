@@ -95,21 +95,19 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         player2Name = prefs?.getString("username2", "Player 2")!!
         uniqueUid = prefs?.getString("uuid", null)!!
 
-        // identity + connection only need to be set once per session
         sessionViewModel.localPlayerName = player1Name
         sessionViewModel.opponentName = player2Name
         sessionViewModel.uniqueUid = uniqueUid
 
         val defaultTurn = if (isHost) 1 else 2
-        sessionViewModel.initBoard(defaultTurn)         // no-op if already initialized
-        sessionViewModel.bindConnectionCallbacks()       // no-op if already bound
+        sessionViewModel.initBoard(defaultTurn)
+        sessionViewModel.bindConnectionCallbacks()
 
         binding.resetGameOverlay.setOnClickListener {
             gameConnection.sendMove(GameMove(player1Name, -2))
             resetGame(false)
         }
 
-        // Board rebuild is a one-time View construction step, independent of state.
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             sizeTile = resources.displayMetrics.heightPixels / 9
             heightTile = (sizeTile * 3) / 4
@@ -132,7 +130,7 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         binding.diceImage.setOnClickListener {
             diceRoll()
         }
-        if (sessionViewModel.remainingSeconds.value == 0L && sessionViewModel.turnTimeout == 0L) {
+        if (!sessionViewModel.timerStarted) {
             sessionViewModel.startTurnTimer()
         }
 

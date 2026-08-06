@@ -30,11 +30,13 @@ class OfflineFragment: Fragment(R.layout.offline_fragment) {
         }
     }
     private fun botHandler(view: View){
+        viewModel.resetForNewGame()
         findNavController().navigate(R.id.offline_to_game)
         viewModel.connectionType = "bot"
         setUsername("Bot")
     }
     private fun pvpHandler(view: View){
+        viewModel.resetForNewGame()
         findNavController().navigate(R.id.offline_to_game)
         viewModel.connectionType = "pvp"
         setUsername("Player 2")

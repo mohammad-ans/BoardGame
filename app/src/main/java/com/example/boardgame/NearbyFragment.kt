@@ -262,6 +262,7 @@ class NearbyFragment : Fragment(R.layout.nearbysetup) {
         sessionViewModel.isHost = isHost
         sessionViewModel.connectionType = "online"
         requireActivity().runOnUiThread {
+            sessionViewModel.resetForNewGame()
             findNavController().navigate(R.id.friendly_to_game)
         }
 

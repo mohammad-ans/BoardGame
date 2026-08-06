@@ -135,7 +135,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         else
             sessionViewModel.ensureTimer()
 
-        boardCreate(sessionViewModel.boardState.value, false)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 sessionViewModel.boardState.collect { state ->
@@ -612,9 +611,9 @@ class GameFragment : Fragment(R.layout.gamefragment) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        sessionViewModel.cancelTimer()
         gameConnection.stopVoiceChat()
         if (isRemoving) {
+            sessionViewModel.cancelTimer()
             gameConnection.disconnect()
         }
         _binding = null
@@ -640,5 +639,13 @@ class GameFragment : Fragment(R.layout.gamefragment) {
             else -> R.drawable.dice_six
         }
         binding.diceImage.setImageResource(imgSrc)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        _binding.let {
+            if(it?.fireworks?.isRunning() ?: false)
+                it.fireworks.stop()
+        }
     }
 }

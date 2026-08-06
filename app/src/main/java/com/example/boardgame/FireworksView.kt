@@ -75,21 +75,25 @@ class FireworksView @JvmOverloads constructor(
         addUpdateListener { updatePrt() }
     }
     fun start() {
+        if(animator.isRunning)
+            return
         particles.clear()
         animator.start()
         bursts()
     }
     fun stop() {
-        if(animator.isRunning){
-            animator.cancel()
-            particles.clear()
-            invalidate()
-        }
+        animator.cancel()
+        particles.clear()
+        invalidate()
     }
     fun isRunning() : Boolean {
         return animator.isRunning
     }
 
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        stop()
+    }
     private fun bursts() {
         postDelayed({
     if(animator.isRunning){

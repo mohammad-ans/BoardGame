@@ -2,6 +2,7 @@ package com.example.boardgame
 
 import android.content.Context
 import android.os.Bundle
+import okhttp3.Call
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,32 +14,51 @@ import androidx.navigation.fragment.findNavController
 import com.example.boardgame.databinding.LeaderboardBinding
 
 class LeaderboardFragment: Fragment(R.layout.leaderboard) {
-    private lateinit var binding: LeaderboardBinding
+    var binding: LeaderboardBinding? = null
+    var request: Call? = null
+    private lateinit var api: Api
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ): View? {
         binding = LeaderboardBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val api = Api("https://yappyyap.xyz:443")
-        api.leaderboard(::f){
-            requireActivity().runOnUiThread {
-                Toast.makeText(requireContext(), "Leaderboard load error $it", Toast.LENGTH_LONG).show()
+        api = Api("https://yappyyap.xyz:443")
+        request = api.leaderboard(::f){
+            if(!isAdded || binding == null)
+                return@leaderboard
+
+            api.postResult {
+                Toast.makeText(
+                    requireContext(),
+                    "Leaderboard load error $it",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
-        binding.backBtn.setOnClickListener {
+        binding?.backBtn?.setOnClickListener {
             findNavController().popBackStack()
         }
     }
     private fun f( lst: List<ProfileResult>) {
-        requireActivity().runOnUiThread {
-            binding.leaderboardLst.adapter = LeaderboardAdapter(requireContext(), lst)
+        if(!isAdded || binding == null)
+            return
+        api.postResult{
+            binding?.leaderboardLst?.adapter = LeaderboardAdapter(requireContext(), lst)
         }
+
+
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+        request?.cancel()
     }
 }
 class LeaderboardAdapter(context: Context, private val entries: List<ProfileResult>) : ArrayAdapter<ProfileResult>(context, 0, entries) {

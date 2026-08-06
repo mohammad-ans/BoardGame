@@ -1,5 +1,7 @@
 package com.example.boardgame
 
+import android.os.Handler
+import android.os.Looper
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -11,10 +13,16 @@ import java.io.IOException
 
 class Api(private val baseUrl: String) {
     private val client = OkHttpClient()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
-    fun fetchProfile(username: String, onResult: (ProfileResult?) -> Unit, onError: (String) -> Unit) {
+    fun postResult(action: () -> Unit) {
+        mainHandler.post(action)
+    }
+
+    fun fetchProfile(username: String, onResult: (ProfileResult?) -> Unit, onError: (String) -> Unit) : Call {
         val request = Request.Builder().url("$baseUrl/profile/$username").build()
-        client.newCall(request).enqueue(object : Callback {
+        val call = client.newCall(request)
+            call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onError(e.message ?: "Check your network")
             }
@@ -40,10 +48,12 @@ class Api(private val baseUrl: String) {
                 }
             }
         })
+        return call
     }
-    fun leaderboard(onResult: (List<ProfileResult>) -> Unit, onError: (String) -> Unit) {
+    fun leaderboard(onResult: (List<ProfileResult>) -> Unit, onError: (String) -> Unit): Call {
         val request = Request.Builder().url("$baseUrl/leaderboard").build()
-        client.newCall(request).enqueue(object : Callback {
+        val call =  client.newCall(request)
+            call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onError(e.message ?: "Network Error")
             }
@@ -68,6 +78,7 @@ class Api(private val baseUrl: String) {
                 }
             }
         })
+        return call
     }
 }
 

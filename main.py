@@ -14,7 +14,7 @@ app.add_middleware(
         allow_headers=["*"]
 )
 
-TIMEOUT_SECONDS = 200
+TIMEOUT_SECONDS = 100
 
 Base.metadata.create_all(bind = engine)
 
@@ -59,7 +59,7 @@ class ConnectionManager:
         await self.list_conn[players[0]].send_json({"type" : "username", "username": local_name})
         await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success", "is_initiator" : True})
         return 0, self.player_local[players[0]], room_code
-    
+
     def random_util(self, user1 : str, user2 : str, room_code : str):
         self.room_players[room_code] = (user1, user2)
         self.player_room[user1] = room_code
@@ -74,6 +74,23 @@ class ConnectionManager:
                     room_code = self.player_room[user]
                 else:
                     return
+            if room_code in self.room_active and self.room_active[room_code]:
+                winner_name = players[0]
+                loser_name = players[1]
+                if user == players[0]:
+                    winner_name = players[1]
+                    loser_name = players[0]
+                players = manager.room_players[room_code]
+                if players:
+                    try:
+                        db = session()
+                        record_result(db, winner_name, loser_name)
+
+                    except Exception as e:
+                        print(e)
+                    finally:
+                        print(winner_name, loser_name)
+                        db.close()
             players = self.room_players[room_code]
             if lose:
                 if players[0] == user and players[1] and players[1] in self.list_conn:
@@ -87,7 +104,7 @@ class ConnectionManager:
             self.room_players.pop(room_code)
             self.rooms.discard(room_code)
             return 0
-        
+
         except:
             pass
 
@@ -105,7 +122,7 @@ class ConnectionManager:
                 await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -3})
             elif players[0] and players[0] in self.list_conn.keys():
                 await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -3})
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await self.remove_connection(user, room_code)
         except asyncio.CancelledError:
             raise
@@ -119,7 +136,7 @@ class ConnectionManager:
             random_name = self.create_room()
         self.rooms.add(random_name)
         return random_name
-    
+
     async def send_data(self, room_code : str, user : str, move):
         players = self.room_players[room_code]
         if user == players[0]:
@@ -194,7 +211,7 @@ async def main_websoc(user : WebSocket):
                             local_name = status[2]
                             await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0], "is_initiator" : False})
-                            
+
                     case "voice_offer" | "voice_answer" | "voice_ice_candidate":
                         room_code = data["room_code"]
                         if room_code:
@@ -205,11 +222,17 @@ async def main_websoc(user : WebSocket):
                         move = data["dice_val"]
                         await manager.send_data(room_code, username, move)
 
+                    case "restart":
+                        room_code = data["room_code"]
+                        if room_code not in manager.rooms:
+                            return
+                        manager.room_active[room_code] = False
+
                     case "rejoin":
                         room_code = data["room_code"]
                         if not manager.list_reconn.get(username, False):
                             manager.list_reconn[username] = True
-                            asyncio.sleep(1)
+                            await asyncio.sleep(1)
                             task = asyncio.create_task(manager.wait_before_disconnect(username, room_code))
                             manager.pending_disconnect[username] = task
                         status = manager.rejoin(room_code, username)
@@ -231,6 +254,7 @@ async def main_websoc(user : WebSocket):
                         room_code = data["room_code"]
                         if room_code not in manager.rooms:
                             return
+                        manager.room_active[room_code] = False
                         winner_name = data["winner"]
                         players = manager.room_players[room_code]
                         if players:
@@ -238,7 +262,7 @@ async def main_websoc(user : WebSocket):
                             try:
                                 db = session()
                                 record_result(db, winner_name, loser_name)
-                                
+
                             except Exception as e:
                                 print(e)
                             finally:

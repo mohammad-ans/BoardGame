@@ -1,6 +1,5 @@
 package com.example.boardgame
 
-import android.widget.TextView
 import kotlinx.serialization.Serializable
 import org.json.JSONObject
 

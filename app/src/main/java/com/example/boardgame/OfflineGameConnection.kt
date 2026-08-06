@@ -1,8 +1,6 @@
 package com.example.boardgame
 
 import android.content.Context
-import android.widget.TextView
-import org.json.JSONObject
 
 class OfflineGameConnection(private val context : Context, val playerName : String) : GameConnection {
     private var moveCallback : ((GameMove) -> Unit)? = null

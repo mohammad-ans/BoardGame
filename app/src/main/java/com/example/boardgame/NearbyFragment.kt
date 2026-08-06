@@ -28,7 +28,6 @@ import androidx.core.location.LocationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
-import kotlin.text.get
 
 
 

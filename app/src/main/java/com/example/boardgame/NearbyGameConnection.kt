@@ -10,8 +10,6 @@ import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.os.ParcelFileDescriptor
-import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
@@ -27,7 +25,6 @@ import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
@@ -97,7 +94,6 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
                 }
             }
             catch(e : Exception) {
-                Log.e("NearbyVoice", "Capture Error: ${e.message}", e)
             }
             finally {
                 outputStream.close()
@@ -153,7 +149,6 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
                 }
             }
             catch(e : Exception) {
-                Log.e("NearbyVoice", "PlayBack Error ${e.message}", e)
             }
         }.start()
     }
@@ -181,7 +176,6 @@ class NearbyGameConnection(private val context: Context, private val localPlayer
                     handleIncomingVoiceStream(payload)
                 }
                 else -> {
-                    Log.e("Nearby Unknown Stream", "Type: ${payload.type} $payload")
                 }
             }
         }

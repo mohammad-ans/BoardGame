@@ -1,17 +1,10 @@
 package com.example.boardgame
 
-import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings.Global.getString
-import android.util.Log
-import android.widget.TextView
-import android.widget.Toast
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -30,8 +23,6 @@ import org.webrtc.RtpReceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import java.util.concurrent.TimeUnit
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class OnlineGameConnection(private val context: Context, private val playerName: String, private val serverUrl : String) : GameConnection {
     private var moveCallback: ((GameMove) -> Unit)? = null
@@ -95,7 +86,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                Log.e("Open", "open")
                 send(JSONObject().put("username", username).put("local", playerName))
                 reconnectAttempts = 0
                 iceRestartAttempts = 0
@@ -106,7 +96,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e("C", " ${t.message}")
                 super.onFailure(webSocket, t, response)
                 this@OnlineGameConnection.webSocket = null
                 reconnect()
@@ -123,10 +112,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         val json = try{
             JSONObject(text)
         } catch (e: Exception) {
-            Log.e("Online Mode", text)
             return
         }
-        Log.e("JSON", "${json}")
         when(json.optString("type")) {
             "room_created" -> {
                 currentRoomCode = json.getString("room_code")
@@ -137,7 +124,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 val turn = json.getInt("turn") == 1
                 currentRoomCode = json.getString("room_code")
                 isInitiator = json.getBoolean("is_initiator")
-                Log.e("Test", "$turn $isInitiator")
                 onMatched?.invoke(currentRoomCode!!, turn)
             }
             "player_joined" -> {
@@ -237,7 +223,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             }
 
             override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
-                Log.d("WebRTC", "Ice State: $state")
                 when (state) {
                     PeerConnection.IceConnectionState.DISCONNECTED -> {
                         voiceHandler.postDelayed({
@@ -298,7 +283,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
             createAndSendOffer()
     }
     private fun createAndSendOffer(){
-        Log.e("WebRtc", "sent")
         val constraints = MediaConstraints()
         peerConnection?.createOffer(object : SimpleSdpObserver() {
             override fun onCreateSuccess(sdp: SessionDescription?) {
@@ -323,7 +307,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         }, constraints)
     }
     override fun send(json : JSONObject, put: Boolean) {
-        Log.e("Move", "$json  $webSocket")
         if(put){
             if(currentRoomCode == null)
                 return
@@ -403,8 +386,6 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         audioSource = null
     }
     private fun reconnect(){
-        Log.e("Reconn", "$reconnectAttempts")
-
         startLoading?.invoke()
         if (reconnectAttempts >= maxRecon) {
             onConnectionFailed?.invoke()
@@ -468,11 +449,9 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         override fun onCreateSuccess(sdp: SessionDescription?) {}
         override fun onSetSuccess() {}
         override fun onCreateFailure(error: String?) {
-            Log.e("WebRTC", "Create failure: $error")
         }
 
         override fun onSetFailure(error: String?) {
-            Log.e("WebRTC", "Set failure: $error")
         }
     }
     override fun setOnStopLoading(f: (() -> Unit)) {

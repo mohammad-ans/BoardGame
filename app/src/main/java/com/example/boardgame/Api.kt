@@ -54,7 +54,7 @@ class Api(private val baseUrl: String) {
     fun leaderboard(onResult: (List<ProfileResult>) -> Unit, onError: (String) -> Unit): Call {
         val request = Request.Builder().url("$baseUrl/leaderboard").build()
         val call =  client.newCall(request)
-            call.enqueue(object : Callback {
+        call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onError(e.message ?: "Network Error")
             }

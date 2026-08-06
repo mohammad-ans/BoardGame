@@ -16,7 +16,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -221,7 +220,6 @@ class GameFragment : Fragment(R.layout.gamefragment) {
         }
     }
     private fun onRemoteMove(diceVal: Int) {
-        Log.e("Move receive", "$diceVal")
         when (diceVal) {
             -1 -> {
                 binding.overlayWait.visibility = View.GONE

@@ -63,7 +63,17 @@ class OnlineGameConnection(private val context: Context, private val playerName:
     private var localAudioTrack: org.webrtc.AudioTrack? = null
     private var audioSource: AudioSource? = null
 
-    private val iceServers = listOf(PeerConnection.IceServer.builder("stun:stun.l.google.com").createIceServer() )
+    private val iceServers = listOf(
+        PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
+            .setUsername("openrelayproject")
+            .setPassword("openrelayproject")
+            .createIceServer(),
+        PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
+            .setUsername("openrelayproject")
+            .setPassword("openrelayproject")
+            .createIceServer()
+    )
     private val pendingIceCandidates = mutableListOf<IceCandidate>()
     private var remoteDescriptionSet = false
     override fun onMoveReceived(callback: (GameMove) -> Unit) {
@@ -131,14 +141,14 @@ class OnlineGameConnection(private val context: Context, private val playerName:
                 onMatched?.invoke(currentRoomCode!!, turn)
             }
             "player_joined" -> {
-                onMatched?.invoke(currentRoomCode!!, true)
                 isInitiator = true
+                onMatched?.invoke(currentRoomCode!!, true)
             }
             "join_room" -> {
                 val status = json.getString("status")
                 if (status == "success") {
-                    onMatched?.invoke(currentRoomCode!!, false)
                     isInitiator = false
+                    onMatched?.invoke(currentRoomCode!!, false)
                 }
                 else
                     onError?.invoke(json.getString("status"))

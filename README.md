@@ -27,6 +27,17 @@ AI was used as helping tool in reconnection logic debugging and using viewmodel 
 ## How to Use
 This is an android application so you need to install it either on an android phone or tablet etc, emulators or import the project in android studio. You can just open the game in android devices or emulators. For android studio you need to run the app on an installed emulator there.
 
+### For setting the backend(its hosted at yappyyap.xyz:443)
+Backend is already hosted but if wants to be setted up locally do. You need to have python and sql lite installed.
+```bash
+git clone https://github.com/mohammad-ans/BoardGame.git
+cd backend
+pip install fastapi uvicorn sqlalchemy
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+Then the api can be accessed in emulators from 10.0.2.2 for local setup in android, otherwise the api can simply be used by going to localhost:8000
+
+
 ### Some images from the game
 ![Menu Screen](images/home.png)
 ![Profile](images/profile.png)

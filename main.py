@@ -296,8 +296,12 @@ def record_result(db, winner_name: str | None, loser_name: str | None):
             db.add(user)
             db.flush()
         if is_winner:
+            if manager.player_local[player_name]:
+                user.local_name = manager.player_local[player_name]
             user.wins += 1
         else:
+            if manager.player_local[player_name]:
+                user.local_name = manager.player_local[player_name]
             user.losses += 1
     db.commit()
 

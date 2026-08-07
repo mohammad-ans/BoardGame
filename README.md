@@ -23,3 +23,14 @@ The journey of creating this app was smooth at first as I knew everything I was 
 
 ### AI Usage
 AI was used as helping tool in reconnection logic debugging and using viewmodel standard for android. All development was done by me except some drawables(resources, svgs) which were truly converted from images to vectors using AI tools.
+
+## How to Use
+This is an android application so you need to install it either on an android phone or tablet etc, emulators or import the project in android studio. You can just open the game in android devices or emulators. For android studio you need to run the app on an installed emulator there.
+
+### Some images from the game
+![Menu Screen](images/home.png)
+![Profile](images/profile.png)
+![Leaderboard](images/leaderboard.png)
+![Game Area Portrait](images/game.png)
+![Game Area Landscape](images/game_landscape.png)
+![Win Game](images/game_win.png)

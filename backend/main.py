@@ -1,28 +1,34 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import random
 import asyncio
+from db import session, User, Base, engine
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_headers=["*"]
 )
 
-TIMEOUT_SECONDS = 120
+TIMEOUT_SECONDS = 100
+
+Base.metadata.create_all(bind = engine)
 
 class ConnectionManager:
     def __init__(self):
         self.rooms: set[str] = set()
         self.list_conn: dict[str, WebSocket] = {}
+        self.list_reconn: dict[str, bool] = {}
         self.random_waiting: set[str] = set()
         self.room_players: dict[str, tuple] = dict()
         self.player_room: dict[str, str] = dict()
         self.player_local: dict[str, str] = dict()
         self.pending_disconnect: dict[str, asyncio.Task] = {}
+        self.room_active: dict[str, bool] = {}
 
     async def add_connection(self, conn : WebSocket):
         await conn.accept()
@@ -53,28 +59,44 @@ class ConnectionManager:
         await self.list_conn[players[0]].send_json({"type" : "username", "username": local_name})
         await self.list_conn[players[0]].send_json({"type" : "player_joined", "status" : "success", "is_initiator" : True})
         return 0, self.player_local[players[0]], room_code
-    
+
     def random_util(self, user1 : str, user2 : str, room_code : str):
         self.room_players[room_code] = (user1, user2)
         self.player_room[user1] = room_code
         self.player_room[user2] = room_code
 
-    async def remove_connection(self, user : str, room_code : str | None):
+    async def remove_connection(self, user : str, room_code : str | None, lose : bool = True):
+        self.list_conn.pop(user, None)
+        self.list_reconn.pop(user, None)
         try:
-            self.list_conn.pop(user)
-            if user in self.random_waiting:
-                self.random_waiting.discard(user)
             if not room_code:
-                if user in self.player_room.keys():
+                if user in self.player_room:
                     room_code = self.player_room[user]
                 else:
                     return
+            if room_code in self.room_active and self.room_active[room_code]:
+                winner_name = players[0]
+                loser_name = players[1]
+                if user == players[0]:
+                    winner_name = players[1]
+                    loser_name = players[0]
+                players = manager.room_players[room_code]
+                if players:
+                    try:
+                        db = session()
+                        record_result(db, winner_name, loser_name)
 
+                    except Exception as e:
+                        print(e)
+                    finally:
+                        print(winner_name, loser_name)
+                        db.close()
             players = self.room_players[room_code]
-            if players[0] == user and players[1] and players[1] in self.list_conn.keys():
-                await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
-            elif players[0] and players[0] in self.list_conn.keys():
-                await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
+            if lose:
+                if players[0] == user and players[1] and players[1] in self.list_conn:
+                    await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : 0})
+                elif players[0] and players[0] in self.list_conn:
+                    await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : 0})
             if players[0] in self.player_room:
                 self.player_room.pop(players[0], "")
             if players[1] in self.player_room:
@@ -82,18 +104,25 @@ class ConnectionManager:
             self.room_players.pop(room_code)
             self.rooms.discard(room_code)
             return 0
-        
+
         except:
             pass
 
     async def wait_before_disconnect(self, user : str, room_code : str):
+        if user in self.random_waiting:
+            self.random_waiting.discard(user)
+        if not room_code:
+            if user in self.player_room:
+                room_code = self.player_room.get(user)
+            else:
+                return
         try:
-            players = self.room_players[room_code]
-            if players[0] == user and players[1] and players[1] in self.list_conn.keys():
+            players = self.room_players.get(room_code)
+            if players[0] == user and players[1] and players[1] in self.list_conn:
                 await self.list_conn[players[1]].send_json({"type" : "move", "diceVal" : -3})
             elif players[0] and players[0] in self.list_conn.keys():
                 await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : -3})
-            asyncio.sleep(10)
+            await asyncio.sleep(25)
             await self.remove_connection(user, room_code)
         except asyncio.CancelledError:
             raise
@@ -107,7 +136,7 @@ class ConnectionManager:
             random_name = self.create_room()
         self.rooms.add(random_name)
         return random_name
-    
+
     async def send_data(self, room_code : str, user : str, move):
         players = self.room_players[room_code]
         if user == players[0]:
@@ -116,9 +145,11 @@ class ConnectionManager:
             await self.list_conn[players[0]].send_json({"type" : "move", "diceVal" : move})
 
     async def random_join(self, user : str):
-        if len(self.random_waiting) > 0:
+        self.random_waiting.add(user)
+        if len(self.random_waiting) > 1:
             turn = random.randint(0, 1)
             room_code = self.create_room()
+            self.random_waiting.discard(user)
             player = self.random_waiting.pop()
             self.random_util(user, player, room_code)
             local_name = self.player_local[user]
@@ -126,7 +157,6 @@ class ConnectionManager:
             await self.list_conn[player].send_json({"type" : "matched", "status" : "Success", "room_code" : room_code, "turn" : int(not turn), "is_initiator" : True})
             return turn, room_code, self.player_local[player]
         else:
-            self.random_waiting.add(user)
             return -1
 
     async def relay_to_opponent(self, room_code : str, sender : str, payload: dict):
@@ -140,11 +170,11 @@ class ConnectionManager:
     def rejoin(self, room_code : str, user: str):
         if room_code not in self.rooms or room_code not in self.room_players:
             return -1
-        pending_task = self.pending_disconnect.pop(user)
-        if pending_task:
-            pending_task.cancel()
-        else:
+        pending_task = self.pending_disconnect.pop(user, -1)
+        if isinstance(pending_task, int):
             return -1
+        else:
+            pending_task.cancel()
         return 0
 manager =  ConnectionManager()
 
@@ -154,9 +184,10 @@ async def main_websoc(user : WebSocket):
     try:
         while True:
             data = await asyncio.wait_for(user.receive_json(), timeout=TIMEOUT_SECONDS)
+            if data["type"] != "rejoin" or data["type"].startswith("voice"):
+                manager.list_reconn[username] = False
             if "type" in data:
                 match data["type"]:
-
                     case "create_room":
                         room_code = manager.assign_room(username)
                         await user.send_json({"type" : "room_created", "room_code" : room_code, "status" : "success"})
@@ -180,7 +211,7 @@ async def main_websoc(user : WebSocket):
                             local_name = status[2]
                             await user.send_json({"type" : "username", "username": local_name})
                             await user.send_json({"type" : "matched", "status" : "Success", "room_code" : status[1], "turn" : status[0], "is_initiator" : False})
-                            
+
                     case "voice_offer" | "voice_answer" | "voice_ice_candidate":
                         room_code = data["room_code"]
                         if room_code:
@@ -191,25 +222,111 @@ async def main_websoc(user : WebSocket):
                         move = data["dice_val"]
                         await manager.send_data(room_code, username, move)
 
+                    case "restart":
+                        room_code = data["room_code"]
+                        if room_code not in manager.rooms:
+                            return
+                        manager.room_active[room_code] = True
+
                     case "rejoin":
                         room_code = data["room_code"]
-                        status = manager.rejoin(room_code)
+                        if not manager.list_reconn.get(username, False):
+                            manager.list_reconn[username] = True
+                            await asyncio.sleep(1)
+                            task = asyncio.create_task(manager.wait_before_disconnect(username, room_code))
+                            manager.pending_disconnect[username] = task
+                        status = manager.rejoin(room_code, username)
                         if status == -1:
                             await user.send_json({"type" : "move", "diceVal" : -4})
                         else:
                             await user.send_json({"type" : "rejoined"})
-                            await manager.relay_to_opponent(room_code, user, {"type" : "rejoined_opponent"})
+                            await manager.relay_to_opponent(room_code, username, {"type" : "rejoined_opponent"})
                     case "rejoin_data":
-                        room_code = data["room_code"]
-                        await manager.relay_to_opponent(room_code, user, )
+                        room_code = manager.player_room[username]
+                        await manager.relay_to_opponent(room_code, username, data)
                         await user.send_json({"type" : "stop_loading"})
                     case "leave":
                         room_code = data["room_code"]
-                        await manager.remove_connection(username, room_code, data)
+                        await manager.remove_connection(username, room_code)
+                        manager.list_reconn[username] = True
                         break
-                
+                    case "game_over":
+                        room_code = data["room_code"]
+                        if room_code not in manager.rooms:
+                            return
+                        manager.room_active[room_code] = False
+                        winner_name = data["winner"]
+                        players = manager.room_players[room_code]
+                        if players:
+                            loser_name = players[1] if players[0] == winner_name else players[0]
+                            try:
+                                db = session()
+                                record_result(db, winner_name, loser_name)
+
+                            except Exception as e:
+                                print(e)
+                            finally:
+                                print(winner_name, loser_name)
+                                db.close()
+                    case "max_wait_leave":
+                        await manager.remove_connection(username, None, False)
+    except:
+        pass
+    finally:
+        if not manager.list_reconn.get(username, False):
+            manager.list_reconn[username] = True
+            task = asyncio.create_task(manager.wait_before_disconnect(username, None))
+            manager.pending_disconnect[username] = task
+
+
+def record_result(db, winner_name: str | None, loser_name: str | None):
+    for player_name, is_winner in ((winner_name, True), (loser_name, False)):
+        if not player_name:
+            continue
+        user = db.query(User).filter(User.username == player_name).first()
+        if not user:
+            local = "username"
+            if manager.player_local[player_name]:
+                local = manager.player_local[player_name]
+            user = User(
+                id=player_name,
+                username=player_name,
+                local_name=local
+            )
+            db.add(user)
+            db.flush()
+        if is_winner:
+            if manager.player_local[player_name]:
+                user.local_name = manager.player_local[player_name]
+            user.wins += 1
+        else:
+            if manager.player_local[player_name]:
+                user.local_name = manager.player_local[player_name]
+            user.losses += 1
+    db.commit()
+
+@app.get("/profile/{player_name}")
+def user_data(player_name: str):
+    db = session()
+    try:
+        user = db.query(User).filter(User.username == player_name).first()
+        if not user:
+            return {"error" : "Player details not found"}
+        return {
+            "local_name" : user.local_name,
+            "wins" : user.wins,
+            "losses" : user.losses
+        }
     except Exception as e:
         print(e)
     finally:
-        task = asyncio.create_task(manager.wait_before_disconnect(username, None))
-        manager.pending_disconnect[username] = task
+        db.close()
+
+@app.get("/leaderboard")
+def leaderboard_data():
+    db = session()
+    try:
+        users = db.query(User).order_by(User.wins.desc()).limit(10).all()
+        return users
+    finally:
+        db.close()

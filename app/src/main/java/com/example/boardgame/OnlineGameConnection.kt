@@ -86,7 +86,8 @@ class OnlineGameConnection(private val context: Context, private val playerName:
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                send(JSONObject().put("username", username).put("local", playerName))
+                val local = prefs.getString("username", "Player 2")
+                send(JSONObject().put("username", username).put("local", local))
                 reconnectAttempts = 0
                 iceRestartAttempts = 0
                 onOpen()
